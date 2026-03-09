@@ -1,0 +1,1277 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "name": "CONVACA P1 INICIO 40KG",
+      "price": 38.93,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 39,
+      "costoBase": 38.93,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 35,
+      "stock": 43.8974358974359,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 2,
+      "name": "CONVACA ENGORDE P2 40KG",
+      "price": 38.13,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 39,
+      "costoBase": 38.13,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 35,
+      "stock": 45,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 3,
+      "name": "CONVACA ENGORDE CERDO GENERICO 35KG",
+      "price": 25.12,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 25.12,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 35,
+      "stock": 200,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 4,
+      "name": "CONVACA MANTENIMIENTO MULTIPLE N-15 35KG",
+      "price": 17.12,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 17.12,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 35,
+      "stock": 50,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 5,
+      "name": "NUTRICENTER INICIO POLLO 35KG",
+      "price": 40.5,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 40.5,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 6,
+      "name": "NUTRICENTER INICIO CERDO 35KG",
+      "price": 39,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 39,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 7,
+      "name": "LA GRANJA INICIO POLLO 40KG",
+      "price": 34.1,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 39,
+      "costoBase": 34.1,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 35,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 8,
+      "name": "LA GRANJA  INICIO CERDO 40KG",
+      "price": 31.8,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 39,
+      "costoBase": 31.8,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 9,
+      "name": "BALMORCA INICIO CERDO 40KG",
+      "price": 32.06,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 39,
+      "costoBase": 32.06,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 35,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 10,
+      "name": "BALMORCA INICIO POLLO 40KG",
+      "price": 36.05,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 39,
+      "costoBase": 36.05,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 35,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 11,
+      "name": "LA ROCA INICIO POLLO 40KG",
+      "price": 35.84,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 39,
+      "costoBase": 35.84,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 35,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 12,
+      "name": "ROCA INICIO CERDO 40KG",
+      "price": 34.97,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 39,
+      "costoBase": 34.97,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 13,
+      "name": "PROCRIA MULTI PONEDORAS 35KG",
+      "price": 26.95,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 26.95,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 14,
+      "name": "LA GRANJA PONEDORA ALTA POSTURA 40KG",
+      "price": 33.8,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 39,
+      "costoBase": 33.8,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 15,
+      "name": "LA ROCA PONEDORA 35KG",
+      "price": 25.56,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 25.56,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 16,
+      "name": "LA GRANJA PONEDORA 35KG",
+      "price": 22.8,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 22.8,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 35,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 17,
+      "name": "BALMORCA VACALECHERA 22% 35KG",
+      "price": 24.2,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 24.2,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 18,
+      "name": "PROCRIA MULTIPOLLOS 35KG",
+      "price": 24.66,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 35,
+      "costoBase": 24.66,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 19,
+      "name": "PUROLOMO ENGORDE CERDO ESPECIAL 20KG",
+      "price": 11.5,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 19,
+      "costoBase": 11.5,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 35,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 20,
+      "name": "LA GRANJA ENGORDE POLLO TERMINADOR 40KG",
+      "price": 32.6,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 39,
+      "costoBase": 32.6,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 21,
+      "name": "DON PIO ENGORDE 35KG",
+      "price": 17,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 17,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 22,
+      "name": "BALMORCA ENGORDE MULTICERDO 35KG",
+      "price": 18.5,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 18.5,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 23,
+      "name": "LA ROCA ENGORDE MULTIPOLLO 35KG",
+      "price": 20.96,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 20.96,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 24,
+      "name": "LA GRANJA ENGORDE POLLO 35KG",
+      "price": 20.1,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 20.1,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 35,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 25,
+      "name": "LA GRANJA ENGORDE CERDO 35KG",
+      "price": 19.1,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 19.1,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 26,
+      "name": "LA GRANJA VACA LEHCERA 21% 35KG",
+      "price": 22.85,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 22.85,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 27,
+      "name": "LA GRANJA VACA LEHCERA 18% 35KG",
+      "price": 20,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 20,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 28,
+      "name": "LA ROCA CERDO PATIO 35KG",
+      "price": 20.96,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 20.96,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 29,
+      "name": "PUROLOMO ALIPA HARINA DE MAIZ 35KG",
+      "price": 22.9,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 22.9,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 30,
+      "name": "LA GRANJA RUMIANTE 35KG",
+      "price": 16.8,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 16.8,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 31,
+      "name": "BALMORCA VACA LECHERA 18% 35KG",
+      "price": 19.29,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 19.29,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 32,
+      "name": "DON PIO VACA LECHERA 18% 35KG",
+      "price": 16,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 16,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 33,
+      "name": "LA ROCA VACA LECHERA 22% 35KG",
+      "price": 23.52,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 23.52,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 34,
+      "name": "LA ROCA CERDO DESARROLLO 35KG",
+      "price": 30.31,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 30.31,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 35,
+      "name": "ROCA ENGORDE POLLO PREMIUM 40KG",
+      "price": 35.16,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 39,
+      "costoBase": 35.16,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 36,
+      "name": "PUROLOMO BOVINO PATIO 20KG",
+      "price": 11.3,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 19.5,
+      "costoBase": 11.3,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 37,
+      "name": "PUROLOMO ALIPA ENGORGE POLLO TERMINADOR 40KG",
+      "price": 39.6,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 39,
+      "costoBase": 39.6,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 38,
+      "name": "SUB PRODUCTO TRIGO 50KG",
+      "price": 25,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 50,
+      "costoBase": 25,
+      "gananciaSacoPct": 20,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 39,
+      "name": "SUB PRODUCTO AFRECHO 25KG",
+      "price": 11.5,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 24,
+      "costoBase": 11.5,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 40,
+      "name": "SUB PRODUCTO MAIZ EN GRANO 50KG",
+      "price": 25,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 49,
+      "costoBase": 25,
+      "gananciaSacoPct": 20,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 41,
+      "name": "SAL BLANCA 20KG",
+      "price": 3.9,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 19,
+      "costoBase": 3.9,
+      "gananciaSacoPct": 20,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 42,
+      "name": "SUB PRODUCTO PASTA 25KG",
+      "price": 18,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 24.5,
+      "costoBase": 18,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 43,
+      "name": "DON PIO MANTENIMIENTO 30KG",
+      "price": 12,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 29.5,
+      "costoBase": 12,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 44,
+      "name": "LA PIEDRA MANTENIMIENTO 35KG",
+      "price": 18.9,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 18.9,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 45,
+      "name": "LA ROCA MULTIPROPOSITO 35KG",
+      "price": 18.67,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 18.67,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 46,
+      "name": "LA GRANJA MULTIPROPOSITO 35 KG",
+      "price": 17.8,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 17.8,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 47,
+      "name": "BALMORCA MULTIPROPOSITO 35KG",
+      "price": 16.39,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 34,
+      "costoBase": 16.39,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 48,
+      "name": "VITALIM MULITIPROPOSITO 40KG",
+      "price": 24,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 40,
+      "costoBase": 24,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 49,
+      "name": "SUB PRODUCTO HARINA PROTEICA DON PIO 30KG",
+      "price": 11,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 29.5,
+      "costoBase": 11,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 50,
+      "name": "CHAMPS PERRARINA 20KG",
+      "price": 33.5,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 20,
+      "costoBase": 33.5,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 51,
+      "name": "FILPO ADULTOS PERRARINA 30KG",
+      "price": 48.5,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 30,
+      "costoBase": 48.5,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 52,
+      "name": "RINGO CACHORRO PERRARINA 30KG",
+      "price": 58.3,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 30,
+      "costoBase": 58.3,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 53,
+      "name": "MIRRINGO GATARINA 20KG",
+      "price": 69.5,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 20,
+      "costoBase": 69.5,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    },
+    {
+      "id": 54,
+      "name": "GATSY GATARINA 20KG ",
+      "price": 82.91,
+      "precioKilo": 0,
+      "precioSaco": 0,
+      "pesoPorSaco": 19.5,
+      "costoBase": 82.91,
+      "gananciaSacoPct": 15,
+      "gananciaKiloPct": 30,
+      "stock": 0,
+      "metric": "kg",
+      "icon": "📦"
+    }
+  ],
+  "prepagos": [],
+  "deudores": [],
+  "cajaBalances": {
+    "usd": 40,
+    "bs": 5000,
+    "digitalBs": 0,
+    "inicialUsd": 40,
+    "inicialBs": 5000,
+    "isCajaAbierta": true,
+    "exchangeRate": 450
+  },
+  "exchangeRate": 450,
+  "isCajaAbierta": true,
+  "movimientos": [
+    {
+      "id": "1772892645118",
+      "fechaHora": "2026-03-07T14:10:45.118Z",
+      "items": [
+        {
+          "id": 1,
+          "name": "CONVACA P1 INICIO 40KG",
+          "quantity": 1,
+          "metric": "Kg",
+          "price": 1.5357001972386588,
+          "costoBase": 38.93,
+          "pesoPorSaco": 39,
+          "tipoVenta": "detal"
+        },
+        {
+          "id": 1,
+          "name": "CONVACA P1 INICIO 40KG",
+          "quantity": 1,
+          "metric": "Saco",
+          "price": 45.800000000000004,
+          "costoBase": 38.93,
+          "pesoPorSaco": 39,
+          "tipoVenta": "saco"
+        }
+      ],
+      "exchangeRate": 390,
+      "cliente": "Cliente Genérico",
+      "esCredito": false,
+      "metodosPago": [
+        {
+          "metodo": "Biopago",
+          "monto": 47.333333333333336
+        }
+      ],
+      "promocionesAplicadas": false,
+      "descuentoMetodoPagoTotal": 0,
+      "metodoPago": [
+        {
+          "metodo": "Biopago",
+          "monto": 47.333333333333336
+        }
+      ],
+      "productos": [
+        {
+          "id": 1,
+          "name": "CONVACA P1 INICIO 40KG",
+          "quantity": 1,
+          "metric": "Kg",
+          "price": 1.5357001972386588,
+          "costoBase": 38.93,
+          "pesoPorSaco": 39,
+          "tipoVenta": "detal"
+        },
+        {
+          "id": 1,
+          "name": "CONVACA P1 INICIO 40KG",
+          "quantity": 1,
+          "metric": "Saco",
+          "price": 45.800000000000004,
+          "costoBase": 38.93,
+          "pesoPorSaco": 39,
+          "tipoVenta": "saco"
+        }
+      ],
+      "totalPagado": 47.333333333333336,
+      "gananciaNetaVenta": 7.407495069033535,
+      "gananciaSacos": 6.8700000000000045,
+      "gananciaKilos": 0.5374950690335306,
+      "ventaBrutaSacos": 45.800000000000004,
+      "ventaBrutaKilos": 1.5357001972386588
+    },
+    {
+      "id": "1772892681124",
+      "fechaHora": "2026-03-07T14:11:21.124Z",
+      "items": [
+        {
+          "id": 1,
+          "name": "CONVACA P1 INICIO 40KG",
+          "quantity": 1,
+          "metric": "Kg",
+          "price": 1.5357001972386588,
+          "costoBase": 38.93,
+          "pesoPorSaco": 39,
+          "tipoVenta": "detal"
+        },
+        {
+          "id": 1,
+          "name": "CONVACA P1 INICIO 40KG",
+          "quantity": 1,
+          "metric": "Saco",
+          "price": 45.800000000000004,
+          "costoBase": 38.93,
+          "pesoPorSaco": 39,
+          "tipoVenta": "saco"
+        }
+      ],
+      "exchangeRate": 430,
+      "cliente": "Cliente Genérico",
+      "esCredito": false,
+      "metodosPago": [
+        {
+          "metodo": "Biopago",
+          "monto": 47.334883720930236
+        }
+      ],
+      "promocionesAplicadas": false,
+      "descuentoMetodoPagoTotal": 0,
+      "metodoPago": [
+        {
+          "metodo": "Biopago",
+          "monto": 47.334883720930236
+        }
+      ],
+      "productos": [
+        {
+          "id": 1,
+          "name": "CONVACA P1 INICIO 40KG",
+          "quantity": 1,
+          "metric": "Kg",
+          "price": 1.5357001972386588,
+          "costoBase": 38.93,
+          "pesoPorSaco": 39,
+          "tipoVenta": "detal"
+        },
+        {
+          "id": 1,
+          "name": "CONVACA P1 INICIO 40KG",
+          "quantity": 1,
+          "metric": "Saco",
+          "price": 45.800000000000004,
+          "costoBase": 38.93,
+          "pesoPorSaco": 39,
+          "tipoVenta": "saco"
+        }
+      ],
+      "totalPagado": 47.334883720930236,
+      "gananciaNetaVenta": 7.407495069033535,
+      "gananciaSacos": 6.8700000000000045,
+      "gananciaKilos": 0.5374950690335306,
+      "ventaBrutaSacos": 45.800000000000004,
+      "ventaBrutaKilos": 1.5357001972386588
+    },
+    {
+      "id": "1772892763084",
+      "fechaHora": "2026-03-07T14:12:43.084Z",
+      "items": [
+        {
+          "id": 1,
+          "name": "CONVACA P1 INICIO 40KG",
+          "quantity": 2,
+          "metric": "Kg",
+          "price": 1.5357001972386588,
+          "costoBase": 38.93,
+          "pesoPorSaco": 39,
+          "tipoVenta": "detal"
+        },
+        {
+          "id": 1,
+          "name": "CONVACA P1 INICIO 40KG",
+          "quantity": 2,
+          "metric": "Saco",
+          "price": 45.800000000000004,
+          "costoBase": 38.93,
+          "pesoPorSaco": 39,
+          "tipoVenta": "saco"
+        }
+      ],
+      "exchangeRate": 430,
+      "cliente": "Cliente Genérico",
+      "esCredito": false,
+      "metodosPago": [
+        {
+          "metodo": "Punto",
+          "monto": 94.67139534883721
+        }
+      ],
+      "promocionesAplicadas": false,
+      "descuentoMetodoPagoTotal": 0,
+      "metodoPago": [
+        {
+          "metodo": "Punto",
+          "monto": 94.67139534883721
+        }
+      ],
+      "productos": [
+        {
+          "id": 1,
+          "name": "CONVACA P1 INICIO 40KG",
+          "quantity": 2,
+          "metric": "Kg",
+          "price": 1.5357001972386588,
+          "costoBase": 38.93,
+          "pesoPorSaco": 39,
+          "tipoVenta": "detal"
+        },
+        {
+          "id": 1,
+          "name": "CONVACA P1 INICIO 40KG",
+          "quantity": 2,
+          "metric": "Saco",
+          "price": 45.800000000000004,
+          "costoBase": 38.93,
+          "pesoPorSaco": 39,
+          "tipoVenta": "saco"
+        }
+      ],
+      "totalPagado": 94.67139534883721,
+      "gananciaNetaVenta": 14.81499013806707,
+      "gananciaSacos": 13.740000000000009,
+      "gananciaKilos": 1.0749901380670612,
+      "ventaBrutaSacos": 91.60000000000001,
+      "ventaBrutaKilos": 3.0714003944773176
+    },
+    {
+      "id": "1772892882140",
+      "fechaHora": "2026-03-07T14:14:42.140Z",
+      "items": [
+        {
+          "id": 1,
+          "name": "CONVACA P1 INICIO 40KG",
+          "quantity": 1,
+          "metric": "Saco",
+          "price": 45.800000000000004,
+          "costoBase": 38.93,
+          "pesoPorSaco": 39,
+          "tipoVenta": "saco"
+        }
+      ],
+      "exchangeRate": 430,
+      "cliente": "Cliente Genérico",
+      "esCredito": false,
+      "metodosPago": [
+        {
+          "metodo": "Efectivo $",
+          "monto": 38.93000000000001
+        }
+      ],
+      "promocionesAplicadas": true,
+      "descuentoMetodoPagoTotal": 6.87,
+      "metodoPago": [
+        {
+          "metodo": "Efectivo $",
+          "monto": 38.93000000000001
+        }
+      ],
+      "productos": [
+        {
+          "id": 1,
+          "name": "CONVACA P1 INICIO 40KG",
+          "quantity": 1,
+          "metric": "Saco",
+          "price": 45.800000000000004,
+          "costoBase": 38.93,
+          "pesoPorSaco": 39,
+          "tipoVenta": "saco"
+        }
+      ],
+      "totalPagado": 38.93000000000001,
+      "gananciaNetaVenta": 4.440892098500626e-15,
+      "gananciaSacos": 6.8700000000000045,
+      "gananciaKilos": 0,
+      "ventaBrutaSacos": 45.800000000000004,
+      "ventaBrutaKilos": 0
+    },
+    {
+      "id": "1772893028846",
+      "fechaHora": "2026-03-07T14:17:08.846Z",
+      "items": [
+        {
+          "id": 1,
+          "name": "CONVACA P1 INICIO 40KG",
+          "quantity": 1,
+          "metric": "Saco",
+          "price": 45.800000000000004,
+          "costoBase": 38.93,
+          "pesoPorSaco": 39,
+          "tipoVenta": "saco"
+        }
+      ],
+      "exchangeRate": 430,
+      "cliente": "Cliente Genérico",
+      "esCredito": false,
+      "metodosPago": [
+        {
+          "metodo": "Efectivo $",
+          "monto": 45.800000000000004
+        }
+      ],
+      "promocionesAplicadas": false,
+      "descuentoMetodoPagoTotal": 0,
+      "metodoPago": [
+        {
+          "metodo": "Efectivo $",
+          "monto": 45.800000000000004
+        }
+      ],
+      "productos": [
+        {
+          "id": 1,
+          "name": "CONVACA P1 INICIO 40KG",
+          "quantity": 1,
+          "metric": "Saco",
+          "price": 45.800000000000004,
+          "costoBase": 38.93,
+          "pesoPorSaco": 39,
+          "tipoVenta": "saco"
+        }
+      ],
+      "totalPagado": 45.800000000000004,
+      "gananciaNetaVenta": 6.8700000000000045,
+      "gananciaSacos": 6.8700000000000045,
+      "gananciaKilos": 0,
+      "ventaBrutaSacos": 45.800000000000004,
+      "ventaBrutaKilos": 0
+    },
+    {
+      "id": "1772893068700",
+      "fechaHora": "2026-03-07T14:17:48.700Z",
+      "items": [
+        {
+          "id": 1,
+          "name": "CONVACA P1 INICIO 40KG",
+          "quantity": 1,
+          "metric": "Saco",
+          "price": 45.800000000000004,
+          "costoBase": 38.93,
+          "pesoPorSaco": 39,
+          "tipoVenta": "saco"
+        }
+      ],
+      "exchangeRate": 430,
+      "cliente": "Cliente Genérico",
+      "esCredito": false,
+      "metodosPago": [
+        {
+          "metodo": "Pago Móvil",
+          "monto": 44.426
+        }
+      ],
+      "promocionesAplicadas": true,
+      "descuentoMetodoPagoTotal": 1.374,
+      "metodoPago": [
+        {
+          "metodo": "Pago Móvil",
+          "monto": 44.426
+        }
+      ],
+      "productos": [
+        {
+          "id": 1,
+          "name": "CONVACA P1 INICIO 40KG",
+          "quantity": 1,
+          "metric": "Saco",
+          "price": 45.800000000000004,
+          "costoBase": 38.93,
+          "pesoPorSaco": 39,
+          "tipoVenta": "saco"
+        }
+      ],
+      "totalPagado": 44.426,
+      "gananciaNetaVenta": 5.496000000000004,
+      "gananciaSacos": 6.8700000000000045,
+      "gananciaKilos": 0,
+      "ventaBrutaSacos": 45.800000000000004,
+      "ventaBrutaKilos": 0
+    },
+    {
+      "id": "1772893115868",
+      "fechaHora": "2026-03-07T14:18:35.868Z",
+      "items": [
+        {
+          "id": 1,
+          "name": "CONVACA P1 INICIO 40KG",
+          "quantity": 1,
+          "metric": "Saco",
+          "price": 45.800000000000004,
+          "costoBase": 38.93,
+          "pesoPorSaco": 39,
+          "tipoVenta": "saco"
+        }
+      ],
+      "exchangeRate": 430,
+      "cliente": "Cliente Genérico",
+      "esCredito": false,
+      "metodosPago": [
+        {
+          "metodo": "Efectivo $",
+          "monto": 38.93000000000001
+        }
+      ],
+      "promocionesAplicadas": true,
+      "descuentoMetodoPagoTotal": 6.87,
+      "metodoPago": [
+        {
+          "metodo": "Efectivo $",
+          "monto": 38.93000000000001
+        }
+      ],
+      "productos": [
+        {
+          "id": 1,
+          "name": "CONVACA P1 INICIO 40KG",
+          "quantity": 1,
+          "metric": "Saco",
+          "price": 45.800000000000004,
+          "costoBase": 38.93,
+          "pesoPorSaco": 39,
+          "tipoVenta": "saco"
+        }
+      ],
+      "totalPagado": 38.93000000000001,
+      "gananciaNetaVenta": 4.440892098500626e-15,
+      "gananciaSacos": 6.8700000000000045,
+      "gananciaKilos": 0,
+      "ventaBrutaSacos": 45.800000000000004,
+      "ventaBrutaKilos": 0
+    },
+    {
+      "id": "1772901861383",
+      "fechaHora": "2026-03-07T16:44:21.383Z",
+      "items": [
+        {
+          "id": 1,
+          "name": "CONVACA P1 INICIO 40KG",
+          "quantity": 1,
+          "metric": "Saco",
+          "price": 45.800000000000004,
+          "costoBase": 38.93,
+          "pesoPorSaco": 39,
+          "tipoVenta": "saco"
+        }
+      ],
+      "exchangeRate": 433.17,
+      "cliente": "Cliente Genérico",
+      "esCredito": false,
+      "metodosPago": [
+        {
+          "metodo": "Efectivo $",
+          "monto": 45.800000000000004
+        }
+      ],
+      "promocionesAplicadas": false,
+      "descuentoMetodoPagoTotal": 0,
+      "metodoPago": [
+        {
+          "metodo": "Efectivo $",
+          "monto": 45.800000000000004
+        }
+      ],
+      "productos": [
+        {
+          "id": 1,
+          "name": "CONVACA P1 INICIO 40KG",
+          "quantity": 1,
+          "metric": "Saco",
+          "price": 45.800000000000004,
+          "costoBase": 38.93,
+          "pesoPorSaco": 39,
+          "tipoVenta": "saco"
+        }
+      ],
+      "totalPagado": 45.800000000000004,
+      "gananciaNetaVenta": 6.8700000000000045,
+      "gananciaSacos": 6.8700000000000045,
+      "gananciaKilos": 0,
+      "ventaBrutaSacos": 45.800000000000004,
+      "ventaBrutaKilos": 0
+    }
+  ],
+  "historialTasas": [
+    {
+      "fecha": "2026-03-07",
+      "tasa": 430
+    },
+    {
+      "fecha": "2026-03-07",
+      "tasa": 433.17
+    },
+    {
+      "fecha": "2026-03-07",
+      "tasa": 450
+    }
+  ],
+  "historialCapital": [],
+  "configuracionDescuentos": {
+    "porMetodoPago": [
+      {
+        "metodo": "Efectivo $",
+        "porcentaje": 15
+      },
+      {
+        "metodo": "Pago Móvil",
+        "porcentaje": 3
+      }
+    ],
+    "porVolumen": [
+      {
+        "idProducto": 1,
+        "cantidadMinima": 5,
+        "precioEspecial": 40
+      }
+    ]
+  }
+}
