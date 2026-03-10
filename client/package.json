@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://SHADOWHITE12.github.io/agro-sistema",
+  "homepage": "https://SHADOWHITE12.github.io/AgroPOS",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
