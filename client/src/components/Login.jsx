@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import socket from '../socket';
+import bcrypt from 'bcryptjs';
 import Swal from 'sweetalert2';
 import FarmBackground from './FarmBackground';
 import { User, Lock, LogIn, ShieldCheck } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
 
 function Login({ onLoginComplete }) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (!username || !password) {
@@ -19,38 +20,51 @@ function Login({ onLoginComplete }) {
 
         setIsLoading(true);
 
-        socket.emit('login', { username, password }, (response) => {
-            setIsLoading(false);
-            if (response.success) {
-                // Success
-                const Toast = Swal.mixin({
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 2000,
-                    timerProgressBar: true
-                });
-                Toast.fire({
-                    icon: 'success',
-                    title: `¡Bienvenido, ${response.user.nombre}!`
-                });
-                onLoginComplete(response.user);
-            } else {
-                // Failure
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Acceso Denegado',
-                    text: response.message || 'Credenciales inválidas'
-                });
+        try {
+            // 1. Buscar usuario en Supabase por username
+            const { data: usuarios, error } = await supabase
+                .from('usuarios')
+                .select('*')
+                .eq('username', username.trim())
+                .limit(1);
+
+            if (error || !usuarios || usuarios.length === 0) {
+                Swal.fire({ icon: 'error', title: 'Acceso Denegado', text: 'Usuario no encontrado.' });
+                setIsLoading(false);
+                return;
             }
-        });
+
+            const usuario = usuarios[0];
+
+            // 2. Comparar contraseña con el hash almacenado (bcrypt en cliente)
+            const passwordMatch = await bcrypt.compare(password, usuario.password_hash);
+
+            if (!passwordMatch) {
+                Swal.fire({ icon: 'error', title: 'Acceso Denegado', text: 'Contraseña incorrecta.' });
+                setIsLoading(false);
+                return;
+            }
+
+            // 3. Login exitoso
+            const Toast = Swal.mixin({
+                toast: true, position: 'top-end',
+                showConfirmButton: false, timer: 2000, timerProgressBar: true
+            });
+            Toast.fire({ icon: 'success', title: `¡Bienvenido, ${usuario.nombre}!` });
+            onLoginComplete(usuario);
+
+        } catch (err) {
+            console.error('[Login] Error:', err);
+            Swal.fire({ icon: 'error', title: 'Error del sistema', text: 'No se pudo conectar con la base de datos.' });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
         <div className="login-screen flex items-center justify-center min-h-screen relative overflow-hidden bg-slate-900">
             <FarmBackground />
 
-            {/* Overlay sutil para mejorar legibilidad */}
             <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px] z-0"></div>
 
             <div className="login-card glass-effect !bg-white/10 !border-white/20 p-10 md:p-12 w-full max-w-md rounded-[3rem] shadow-2xl relative z-10 animate-scaleIn mx-4">
