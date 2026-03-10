@@ -1,3 +1,5 @@
+require('dotenv').config(); // ← PRIMERO: cargar .env antes de cualquier otra cosa
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -739,17 +741,19 @@ io.on('connection', async (socket) => {
 const PORT = process.env.PORT || 3001;
 
 // En PRODUCCIÓN: servir el frontend compilado (Vite build) como archivos estáticos.
-// Express asume el rol de servidor web, entregando index.html para cualquier ruta
-// que no sea un API/WebSocket. Esto permite el patrón de monolito en Render/Railway.
+// Esto permite el patrón de monolito en Render: una sola URL para backend + frontend.
 const clientDistPath = path.join(__dirname, 'client', 'dist');
-if (require('fs').existsSync(clientDistPath)) {
+if (fs.existsSync(clientDistPath)) {
     app.use(express.static(clientDistPath));
-    // Catch-all: devuelve index.html para rutas de cliente (React Router)
-    app.get('*', (req, res) => {
+    // Catch-all SPA fallback (Express 5 compatible: app.use en vez de app.get('*'))
+    // Devuelve index.html para cualquier ruta que no sea un asset estático o WebSocket.
+    app.use((req, res) => {
         res.sendFile(path.join(clientDistPath, 'index.html'));
     });
     console.log(`[SERVIDOR] Sirviendo frontend desde: ${clientDistPath}`);
 } else {
+    // Health-check mínimo para que Render confirme que el servidor responde
+    app.get('/', (req, res) => res.send('AgroPOS API corriendo. Frontend no compilado.'));
     console.log('[SERVIDOR] Modo desarrollo: frontend NO encontrado en client/dist');
 }
 
