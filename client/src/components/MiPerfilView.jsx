@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
 import socket from '../socket';
 import Swal from 'sweetalert2';
+import { User, ShieldCheck, Mail, Lock, RefreshCw, Save } from 'lucide-react';
 
 function MiPerfilView({ currentUser, onProfileUpdate }) {
     const [nombre, setNombre] = useState(currentUser.nombre || '');
@@ -53,13 +53,19 @@ function MiPerfilView({ currentUser, onProfileUpdate }) {
     };
 
     return (
-        <div className="perfil-container p-4 md:p-8 max-w-4xl mx-auto space-y-8">
-            <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tight">Mi Perfil</h2>
+        <div className="perfil-container p-4 md:p-8 max-w-4xl mx-auto space-y-8 animate-fadeIn">
+            <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tight flex items-center gap-3">
+                <User size={28} className="text-[#52B788]" />
+                Mi Perfil
+            </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 md:p-8 space-y-6">
+                <div className="glass-effect rounded-3xl p-6 md:p-8 space-y-6">
                     <div>
-                        <h3 className="text-lg font-black text-slate-800 uppercase tracking-widest border-b border-slate-50 pb-4 mb-6">Datos Personales</h3>
+                        <h3 className="text-lg font-black text-slate-800 uppercase tracking-widest border-b border-black/5 pb-4 mb-6 flex items-center gap-2">
+                            <ShieldCheck size={18} className="text-blue-500" />
+                            Datos Personales
+                        </h3>
                         <form onSubmit={handleUpdateProfile} className="space-y-6">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Nombre Real</label>
@@ -83,17 +89,21 @@ function MiPerfilView({ currentUser, onProfileUpdate }) {
                             <button
                                 type="submit"
                                 disabled={isLoadingProfile}
-                                className="w-full bg-blue-600 text-white py-3 px-6 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:opacity-50"
+                                className="w-full bg-[#1B4332] text-white py-4 px-6 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[#2D6A4F] transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
                             >
+                                {isLoadingProfile ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />}
                                 {isLoadingProfile ? 'Sincronizando...' : 'Guardar Cambios'}
                             </button>
                         </form>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 md:p-8 space-y-6">
+                <div className="glass-effect rounded-3xl p-6 md:p-8 space-y-6">
                     <div>
-                        <h3 className="text-lg font-black text-slate-800 uppercase tracking-widest border-b border-slate-50 pb-4 mb-6">Seguridad</h3>
+                        <h3 className="text-lg font-black text-slate-800 uppercase tracking-widest border-b border-black/5 pb-4 mb-6 flex items-center gap-2">
+                            <Lock size={18} className="text-emerald-500" />
+                            Seguridad
+                        </h3>
                         <form onSubmit={handleChangePassword} className="space-y-6">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Contraseña Actual</label>
@@ -126,9 +136,10 @@ function MiPerfilView({ currentUser, onProfileUpdate }) {
                             <button
                                 type="submit"
                                 disabled={isLoadingPassword}
-                                className="w-full bg-emerald-600 text-white py-3 px-6 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 disabled:opacity-50"
+                                className="w-full bg-[#52B788] text-white py-4 px-6 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[#40916C] transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
                             >
-                                {isLoadingPassword ? 'Validando...' : 'Cambiar Clave'}
+                                {isLoadingPassword ? <RefreshCw className="animate-spin" size={16} /> : <Lock size={16} />}
+                                {isLoadingPassword ? 'Validando...' : 'Actualizar Contraseña'}
                             </button>
                         </form>
                     </div>

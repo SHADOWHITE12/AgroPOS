@@ -1,0 +1,17 @@
+# render.yaml — Configuración de despliegue automático en Render.com
+# Docs: https://render.com/docs/yaml-spec
+
+services:
+  - type: web
+    name: agro-pos
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
+        sync: false   # Lo ingresas manualmente en el dashboard de Render
+      - key: SUPABASE_KEY
+        sync: false   # Lo ingresas manualmente en el dashboard de Render

@@ -4,7 +4,6 @@ import Swal from 'sweetalert2';
 function PromocionesView({ descuentos, setDescuentos, products, userRole, hasAccess }) {
     const [newPagoMetodo, setNewPagoMetodo] = useState('Efectivo $');
     const [newPagoPct, setNewPagoPct] = useState('');
-
     const [newVolProductoId, setNewVolProductoId] = useState('');
     const [newVolMinimo, setNewVolMinimo] = useState('');
     const [newVolPrecioEspecial, setNewVolPrecioEspecial] = useState('');
@@ -15,33 +14,20 @@ function PromocionesView({ descuentos, setDescuentos, products, userRole, hasAcc
         e.preventDefault();
         const pct = parseFloat(newPagoPct);
         if (isNaN(pct) || pct <= 0 || pct > 100) return;
-
         const updated = { ...descuentos };
         const existingIndex = updated.porMetodoPago.findIndex(m => m.metodo === newPagoMetodo);
-
         if (existingIndex !== -1) {
             updated.porMetodoPago[existingIndex].porcentaje = pct;
         } else {
             updated.porMetodoPago.push({ metodo: newPagoMetodo, porcentaje: pct });
         }
-
         setDescuentos(updated);
         setNewPagoPct('');
-        Swal.fire({
-            icon: 'success',
-            title: 'Descuento Asignado',
-            text: `Se configuró ${pct}% de descuento para ${newPagoMetodo}.`,
-            timer: 2000,
-            showConfirmButton: false
-        });
+        Swal.fire({ icon: 'success', title: 'Descuento Asignado', text: `Se configuró ${pct}% de descuento para ${newPagoMetodo}.`, timer: 2000, showConfirmButton: false });
     };
 
     const handleDeleteMetodoPago = (metodo) => {
-        const updated = {
-            ...descuentos,
-            porMetodoPago: descuentos.porMetodoPago.filter(m => m.metodo !== metodo)
-        };
-        setDescuentos(updated);
+        setDescuentos({ ...descuentos, porMetodoPago: descuentos.porMetodoPago.filter(m => m.metodo !== metodo) });
     };
 
     const handleAddVolumen = (e) => {
@@ -49,207 +35,169 @@ function PromocionesView({ descuentos, setDescuentos, products, userRole, hasAcc
         const prodId = parseInt(newVolProductoId);
         const minQty = parseInt(newVolMinimo);
         const specialPrice = parseFloat(newVolPrecioEspecial);
-
         if (!prodId || isNaN(minQty) || minQty <= 1 || isNaN(specialPrice) || specialPrice <= 0) {
-            Swal.fire('Error', 'Verifique los datos de la promoción por volumen. La cantidad mínima debe ser > 1.', 'error');
+            Swal.fire('Error', 'Verifique los datos. La cantidad mínima debe ser > 1.', 'error');
             return;
         }
-
         const updated = { ...descuentos };
         const existingIndex = updated.porVolumen.findIndex(v => v.idProducto === prodId);
-
         if (existingIndex !== -1) {
             updated.porVolumen[existingIndex] = { idProducto: prodId, cantidadMinima: minQty, precioEspecial: specialPrice };
         } else {
             updated.porVolumen.push({ idProducto: prodId, cantidadMinima: minQty, precioEspecial: specialPrice });
         }
-
         setDescuentos(updated);
         setNewVolProductoId('');
         setNewVolMinimo('');
         setNewVolPrecioEspecial('');
-
         const product = products.find(p => p.id === prodId);
-        Swal.fire({
-            icon: 'success',
-            title: 'Promoción Guardada',
-            text: `Precio especial fijado para ${product?.name} al llevar ${minQty} sacos o más.`,
-            timer: 2000,
-            showConfirmButton: false
-        });
+        Swal.fire({ icon: 'success', title: 'Promoción Guardada', text: `Precio especial para ${product?.name} al llevar ${minQty} sacos.`, timer: 2000, showConfirmButton: false });
     };
 
     const handleDeleteVolumen = (idProducto) => {
-        const updated = {
-            ...descuentos,
-            porVolumen: descuentos.porVolumen.filter(v => v.idProducto !== idProducto)
-        };
-        setDescuentos(updated);
+        setDescuentos({ ...descuentos, porVolumen: descuentos.porVolumen.filter(v => v.idProducto !== idProducto) });
     };
 
-    return (
-        <div className="promociones-container p-4 md:p-8 max-w-7xl mx-auto space-y-8">
-            <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tight">Promociones</h2>
+    const sectionCard = { background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' };
+    const th = { padding: '12px 16px', fontSize: '0.72rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', background: '#f8fafc', borderBottom: '2px solid #e2e8f0' };
+    const td = { padding: '12px 16px', borderBottom: '1px solid #f1f5f9' };
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* ---------- DESCUENTOS POR METODO DE PAGO ---------- */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
-                    <h3 className="text-lg font-black text-emerald-600 uppercase tracking-widest mb-2">Métodos de Pago</h3>
-                    <p className="text-slate-500 text-xs mb-6">Descuentos automáticos al pagar por Saco.</p>
+    return (
+        <div style={{ padding: '2rem', background: '#f4f4f4', minHeight: '100%' }}>
+            {/* Header */}
+            <div style={{ marginBottom: '1.5rem' }}>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: '900', color: '#2d3748', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    🏷️ Gestión de Promociones
+                </h2>
+                <p style={{ fontSize: '0.8rem', color: '#718096', margin: '4px 0 0' }}>Configuración de descuentos estratégicos y precios al mayor.</p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '1.5rem' }}>
+
+                {/* ── DESCUENTOS POR MÉTODO DE PAGO ── */}
+                <div style={sectionCard}>
+                    <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#fcfcfb' }}>
+                        <h3 style={{ fontSize: '1rem', fontWeight: '900', color: '#2d3748', margin: 0 }}>💳 Descuentos por Método de Pago</h3>
+                        <p style={{ fontSize: '0.75rem', color: '#718096', margin: '2px 0 0' }}>Incentivos por tipo de transacción (solo Sacos)</p>
+                    </div>
 
                     {hasAccess('promociones', 'crear') && (
-                        <form onSubmit={handleAddMetodoPago} className="flex gap-2 mb-6">
+                        <form onSubmit={handleAddMetodoPago} style={{ display: 'flex', gap: '8px', padding: '14px 16px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', flexWrap: 'wrap' }}>
                             <select
-                                className="flex-1 p-2.5 rounded-xl border border-slate-200 text-sm font-bold bg-slate-50"
                                 value={newPagoMetodo}
                                 onChange={(e) => setNewPagoMetodo(e.target.value)}
+                                style={{ flex: 1, minWidth: '140px', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600' }}
                             >
-                                {metodosPagoDisponibles.map(m => (
-                                    <option key={m} value={m}>{m}</option>
-                                ))}
+                                {metodosPagoDisponibles.map(m => <option key={m} value={m}>{m}</option>)}
                             </select>
                             <input
-                                type="number"
-                                step="0.01"
-                                min="0.01"
-                                max="100"
-                                placeholder="%"
-                                required
-                                className="w-20 p-2.5 rounded-xl border border-slate-200 text-center font-black"
-                                value={newPagoPct}
-                                onChange={(e) => setNewPagoPct(e.target.value)}
+                                type="number" step="0.01" min="0.01" max="100" placeholder="%" required
+                                value={newPagoPct} onChange={(e) => setNewPagoPct(e.target.value)}
+                                style={{ width: '70px', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '700', textAlign: 'center', color: '#16a34a' }}
                             />
-                            <button type="submit" className="bg-emerald-500 text-white px-4 rounded-xl font-black hover:bg-emerald-600 transition-colors">
-                                +
+                            <button type="submit" style={{ padding: '8px 18px', background: '#16a34a', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer' }}>
+                                + Agregar
                             </button>
                         </form>
                     )}
 
-                    <div className="table-responsive-wrapper border border-slate-100 rounded-xl">
-                        <table className="w-full text-left">
-                            <thead>
-                                <tr className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                    <th className="p-3">Método</th>
-                                    <th className="p-3 text-center">Desc (%)</th>
-                                    {hasAccess('promociones', 'eliminar') && <th className="p-3 text-right">Acción</th>}
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                            <tr>
+                                <th style={th}>Método</th>
+                                <th style={{ ...th, textAlign: 'center' }}>Descuento</th>
+                                {hasAccess('promociones', 'eliminar') && <th style={{ ...th, width: '50px' }}></th>}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {descuentos.porMetodoPago.map((d, i) => (
+                                <tr key={i}>
+                                    <td style={td}><span style={{ fontWeight: '700', color: '#2d3748' }}>{d.metodo}</span></td>
+                                    <td style={{ ...td, textAlign: 'center' }}>
+                                        <span style={{ background: '#F0FFF4', color: '#276749', padding: '3px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '700', border: '1px solid #C6F6D5' }}>-{d.porcentaje}%</span>
+                                    </td>
+                                    {hasAccess('promociones', 'eliminar') && (
+                                        <td style={td}>
+                                            <button onClick={() => handleDeleteMetodoPago(d.metodo)} style={{ background: 'none', border: 'none', color: '#CBD5E0', cursor: 'pointer', fontSize: '1rem', lineHeight: 1 }} title="Eliminar">🗑</button>
+                                        </td>
+                                    )}
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {descuentos.porMetodoPago.map((d, i) => (
-                                    <tr key={i} className="border-t border-slate-50">
-                                        <td className="p-3 font-bold text-slate-700 text-sm">{d.metodo}</td>
-                                        <td className="p-3 text-center font-black text-emerald-600">{d.porcentaje}%</td>
-                                        {hasAccess('promociones', 'eliminar') && (
-                                            <td className="p-3 text-right">
-                                                <button
-                                                    onClick={() => handleDeleteMetodoPago(d.metodo)}
-                                                    className="bg-red-50 text-red-500 px-2 py-1 rounded-md text-[10px] font-black hover:bg-red-500 hover:text-white transition-colors"
-                                                >
-                                                    QUITAR
-                                                </button>
-                                            </td>
-                                        )}
-                                    </tr>
-                                ))}
-                                {descuentos.porMetodoPago.length === 0 && (
-                                    <tr>
-                                        <td colSpan={hasAccess('promociones', 'eliminar') ? "3" : "2"} style={{ padding: '1rem', textAlign: 'center', color: '#9ca3af', fontSize: '0.9rem' }}>No hay descuentos configurados.</td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                            ))}
+                            {descuentos.porMetodoPago.length === 0 && (
+                                <tr><td colSpan="3" style={{ ...td, textAlign: 'center', color: '#a0aec0', fontSize: '0.82rem' }}>Sin reglas activas</td></tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
 
-                {/* ---------- PRECIOS ESPECIALES POR VOLUMEN ---------- */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
-                    <h3 className="text-lg font-black text-blue-600 uppercase tracking-widest mb-2">Precios al Mayor</h3>
-                    <p className="text-slate-500 text-xs mb-6">Precio especial por cantidad de sacos.</p>
+                {/* ── PRECIOS POR VOLUMEN ── */}
+                <div style={sectionCard}>
+                    <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#fcfcfb' }}>
+                        <h3 style={{ fontSize: '1rem', fontWeight: '900', color: '#2d3748', margin: 0 }}>📦 Ventas al Mayor (Precios por Volumen)</h3>
+                        <p style={{ fontSize: '0.75rem', color: '#718096', margin: '2px 0 0' }}>Precio especial al superar cantidad mínima</p>
+                    </div>
 
                     {hasAccess('promociones', 'crear') && (
-                        <form onSubmit={handleAddVolumen} className="flex flex-col gap-3 mb-6">
+                        <form onSubmit={handleAddVolumen} style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '14px 16px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
                             <select
-                                className="w-full p-2.5 rounded-xl border border-slate-200 text-sm font-bold bg-slate-50"
-                                value={newVolProductoId}
-                                onChange={(e) => setNewVolProductoId(e.target.value)}
-                                required
+                                value={newVolProductoId} onChange={(e) => setNewVolProductoId(e.target.value)} required
+                                style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600' }}
                             >
-                                <option value="">-- Seleccionar Producto --</option>
-                                {products.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name} (${p.price.toFixed(2)})</option>
-                                ))}
+                                <option value="">Seleccione un producto...</option>
+                                {products.map(p => <option key={p.id} value={p.id}>{p.name} - ${p.price.toFixed(2)}</option>)}
                             </select>
-
-                            <div className="flex gap-2">
+                            <div style={{ display: 'flex', gap: '8px' }}>
                                 <input
-                                    type="number"
-                                    min="2"
-                                    placeholder="Mínimo"
-                                    required
-                                    className="flex-1 p-2.5 rounded-xl border border-slate-200 text-sm font-black"
-                                    value={newVolMinimo}
-                                    onChange={(e) => setNewVolMinimo(e.target.value)}
+                                    type="number" min="2" placeholder="Mín. Sacos" required
+                                    value={newVolMinimo} onChange={(e) => setNewVolMinimo(e.target.value)}
+                                    style={{ flex: 1, padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '700' }}
                                 />
-                                <div className="relative flex-[1.5]">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        min="0.01"
-                                        placeholder="Precio"
-                                        required
-                                        className="w-full pl-7 p-2.5 rounded-xl border border-slate-200 text-sm font-black"
-                                        value={newVolPrecioEspecial}
-                                        onChange={(e) => setNewVolPrecioEspecial(e.target.value)}
-                                    />
-                                </div>
-                                <button type="submit" className="bg-blue-600 text-white px-4 rounded-xl font-black hover:bg-blue-700 transition-colors">
-                                    +
+                                <input
+                                    type="number" step="0.01" min="0.01" placeholder="Precio $" required
+                                    value={newVolPrecioEspecial} onChange={(e) => setNewVolPrecioEspecial(e.target.value)}
+                                    style={{ flex: 1, padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '700', color: '#2563eb' }}
+                                />
+                                <button type="submit" style={{ padding: '8px 18px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer' }}>
+                                    + Agregar
                                 </button>
                             </div>
                         </form>
                     )}
 
-                    <div className="table-responsive-wrapper border border-slate-100 rounded-xl">
-                        <table className="w-full text-left">
-                            <thead>
-                                <tr className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                    <th className="p-3">Producto</th>
-                                    <th className="p-3 text-center">Condición</th>
-                                    {hasAccess('promociones', 'eliminar') && <th className="p-3 text-right">Acción</th>}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {descuentos.porVolumen.map((v, i) => {
-                                    const prod = products.find(p => p.id === v.idProducto);
-                                    return (
-                                        <tr key={i} className="border-t border-slate-50">
-                                            <td className="p-3 text-sm font-bold text-slate-700">{prod ? prod.name : 'Desc.'}</td>
-                                            <td className="p-3 text-center font-medium">
-                                                <span className="block text-slate-400 text-[10px]">&ge; {v.cantidadMinima} sacos</span>
-                                                <span className="font-black text-blue-600 text-sm">${v.precioEspecial.toFixed(2)}</span>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                            <tr>
+                                <th style={th}>Producto</th>
+                                <th style={{ ...th, textAlign: 'center' }}>Configuración</th>
+                                {hasAccess('promociones', 'eliminar') && <th style={{ ...th, width: '50px' }}></th>}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {descuentos.porVolumen.map((v, i) => {
+                                const prod = products.find(p => p.id === v.idProducto);
+                                return (
+                                    <tr key={i}>
+                                        <td style={td}>
+                                            <div style={{ fontWeight: '700', color: '#2d3748', fontSize: '0.9rem' }}>{prod ? prod.name : 'Desconocido'}</div>
+                                            <div style={{ fontSize: '0.75rem', color: '#718096' }}>Regular: ${prod?.price.toFixed(2)}</div>
+                                        </td>
+                                        <td style={{ ...td, textAlign: 'center' }}>
+                                            <div style={{ fontWeight: '900', color: '#2563eb', fontSize: '0.95rem' }}>${v.precioEspecial.toFixed(2)}</div>
+                                            <div style={{ fontSize: '0.72rem', color: '#718096', fontWeight: '600' }}>≥ {v.cantidadMinima} Sacos</div>
+                                        </td>
+                                        {hasAccess('promociones', 'eliminar') && (
+                                            <td style={td}>
+                                                <button onClick={() => handleDeleteVolumen(v.idProducto)} style={{ background: 'none', border: 'none', color: '#CBD5E0', cursor: 'pointer', fontSize: '1rem' }} title="Eliminar">🗑</button>
                                             </td>
-                                            {hasAccess('promociones', 'eliminar') && (
-                                                <td className="p-3 text-right">
-                                                    <button
-                                                        onClick={() => handleDeleteVolumen(v.idProducto)}
-                                                        className="bg-red-50 text-red-500 px-2 py-1 rounded-md text-[10px] font-black hover:bg-red-500 hover:text-white transition-colors"
-                                                    >
-                                                        QUITAR
-                                                    </button>
-                                                </td>
-                                            )}
-                                        </tr>
-                                    );
-                                })}
-                                {descuentos.porVolumen.length === 0 && (
-                                    <tr>
-                                        <td colSpan={hasAccess('promociones', 'eliminar') ? "3" : "2"} style={{ padding: '1rem', textAlign: 'center', color: '#9ca3af', fontSize: '0.9rem' }}>No hay precios al mayor configurados.</td>
+                                        )}
                                     </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                );
+                            })}
+                            {descuentos.porVolumen.length === 0 && (
+                                <tr><td colSpan="3" style={{ ...td, textAlign: 'center', color: '#a0aec0', fontSize: '0.82rem' }}>Sin promociones activas</td></tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

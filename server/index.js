@@ -48,7 +48,7 @@ let globalState = {
         puntoVenta: 0.015, // 1.5%
         biopago: 0.04      // .0%
     },
-    historialVentas: [],
+    movimientos: [],
     metricasGlobales: { totalMayor: 0, totalDetal: 0, gananciaNeta: 0 },
     metricasMetodos: {
         'Punto': { bruto: 0, comision: 0, neto: 0 },
@@ -62,6 +62,12 @@ if (fs.existsSync(STATE_FILE)) {
     try {
         const data = fs.readFileSync(STATE_FILE, 'utf8');
         globalState = JSON.parse(data);
+        // Migración: Si existe historialVentas pero no movimientos, migrar los datos
+        if (globalState.historialVentas && !globalState.movimientos) {
+            globalState.movimientos = globalState.historialVentas;
+            delete globalState.historialVentas;
+            console.log('Migrated historialVentas to movimientos');
+        }
         console.log('State loaded from state.json');
     } catch (err) {
         console.error('Error loading state:', err);
@@ -133,13 +139,22 @@ io.on('connection', (socket) => {
         globalState.cajaBalances = { usd: 0, bs: 0, digitalBs: 0, inicialUsd: 0, inicialBs: 0 };
         globalState.isCajaAbierta = false;
 
+        // 3. Resetear Métricas de desempeño para el nuevo turno
+        globalState.metricasGlobales = { totalMayor: 0, totalDetal: 0, gananciaNeta: 0 };
+        globalState.metricasMetodos = {
+            'Punto': { bruto: 0, comision: 0, neto: 0 },
+            'Biopago': { bruto: 0, comision: 0, neto: 0 }
+        };
+
         saveState();
 
-        // 3. Emitir evento exclusivo de caja cerrada
+        // 4. Emitir evento exclusivo de caja cerrada
         io.emit('caja_cerrada', {
             cajaBalances: globalState.cajaBalances,
             isCajaAbierta: false,
-            historialCierresCaja: globalState.historialCierresCaja
+            historialCierresCaja: globalState.historialCierresCaja,
+            metricasGlobales: globalState.metricasGlobales,
+            metricasMetodos: globalState.metricasMetodos
         });
     });
 
@@ -151,68 +166,99 @@ io.on('connection', (socket) => {
         let totalMetricasSacos = 0;
         let totalMetricasKilos = 0;
 
-        // Process Items to calculate metrics and total profit
-        saleData.items.forEach(item => {
+        // Process items: metrics + profit
+        (saleData.items || []).forEach(item => {
             const isSaco = item.tipoVenta === 'saco';
-
-            // Increment quantities
             if (isSaco) {
                 totalMetricasSacos += item.quantity;
             } else {
-                totalMetricasKilos += item.quantity; // Also applies for 'un' assuming it's detal
+                totalMetricasKilos += item.quantity;
             }
-
-            // Simple gross profit calculation per item
-            const itemGrossProfit = (item.price - item.costoBase) * item.quantity;
-            gananciaVenta += (itemGrossProfit > 0 ? itemGrossProfit : 0); // Ignore negative profits if missing costs
+            const costPerUnit = item.costoBase || 0;
+            const itemProfit = (item.price - costPerUnit) * item.quantity;
+            gananciaVenta += Math.max(0, itemProfit);
         });
 
-        // Update global volumetrics
         globalState.metricasGlobales.totalMayor += totalMetricasSacos;
         globalState.metricasGlobales.totalDetal += totalMetricasKilos;
 
-        // Process Bank Commissions based on payment methods
+        // Process bank commissions for digital methods
         let comisionesTotalesUsd = 0;
-
-        saleData.metodosPago?.forEach(metodo => {
-            // Convert the Bs amount of digital payments to USD equivalent for standard tracking
-            // The frontend sends monto in USD for all payment types in handleProcessSale
-            const montoUsd = metodo.monto;
-
-            if (metodo.metodo === 'Punto' || metodo.metodo === 'Punto DB/CR') {
-                const comisionRate = globalState.comisionesBancarias.puntoVenta;
-                const comisionUsd = montoUsd * comisionRate;
-                const netoUsd = montoUsd - comisionUsd;
-
-                comisionesTotalesUsd += comisionUsd;
-
+        (saleData.metodosPago || []).forEach(m => {
+            const montoUsd = m.monto || 0;
+            if (m.metodo === 'Punto' || m.metodo === 'Punto DB/CR') {
+                const comision = montoUsd * (globalState.comisionesBancarias.puntoVenta || 0.015);
+                comisionesTotalesUsd += comision;
                 globalState.metricasMetodos['Punto'].bruto += montoUsd;
-                globalState.metricasMetodos['Punto'].comision += comisionUsd;
-                globalState.metricasMetodos['Punto'].neto += netoUsd;
-            } else if (metodo.metodo === 'Biopago') {
-                const comisionRate = globalState.comisionesBancarias.biopago;
-                const comisionUsd = montoUsd * comisionRate;
-                const netoUsd = montoUsd - comisionUsd;
-
-                comisionesTotalesUsd += comisionUsd;
-
+                globalState.metricasMetodos['Punto'].comision += comision;
+                globalState.metricasMetodos['Punto'].neto += montoUsd - comision;
+            } else if (m.metodo === 'Biopago') {
+                const comision = montoUsd * (globalState.comisionesBancarias.biopago || 0.04);
+                comisionesTotalesUsd += comision;
                 globalState.metricasMetodos['Biopago'].bruto += montoUsd;
-                globalState.metricasMetodos['Biopago'].comision += comisionUsd;
-                globalState.metricasMetodos['Biopago'].neto += netoUsd;
+                globalState.metricasMetodos['Biopago'].comision += comision;
+                globalState.metricasMetodos['Biopago'].neto += montoUsd - comision;
             }
         });
 
-        // Add discount of payment method as commission deduction
         const descuentoMetodoUsd = saleData.descuentoMetodoPagoTotal || 0;
+        const finalProfit = (gananciaVenta - comisionesTotalesUsd - descuentoMetodoUsd);
+        globalState.metricasGlobales.gananciaNeta += finalProfit;
 
-        // Final Net Profit Calculation
-        globalState.metricasGlobales.gananciaNeta += (gananciaVenta - comisionesTotalesUsd - descuentoMetodoUsd);
+        // Enhance saleRecord for persistent statistics
+        saleRecord.gananciaNetaVenta = finalProfit;
+        saleRecord.ventaBrutaSacos = (saleData.items || [])
+            .filter(i => i.tipoVenta === 'saco')
+            .reduce((sum, i) => sum + (i.price * i.quantity), 0);
+        saleRecord.ventaBrutaKilos = (saleData.items || [])
+            .filter(i => i.tipoVenta === 'detal')
+            .reduce((sum, i) => sum + (i.price * i.quantity), 0);
+        saleRecord.totalPagado = saleData.totalPagado || (saleData.items || []).reduce((sum, i) => sum + (i.price * i.quantity), 0);
+        saleRecord.fechaHora = timestamp; // Coincide con StatsView.jsx expects m.fechaHora
 
-        globalState.historialVentas.push(saleRecord);
+        // ── AUTO-INSERT DEUDORES if credit payment ─────────────────────────
+        const creditPago = (saleData.metodosPago || []).find(m => m.metodo === 'Crédito');
+        if (saleData.esCredito || creditPago) {
+            const deudaUsd = creditPago?.monto || (saleData.items || []).reduce((s, i) => s + i.price * i.quantity, 0);
+            const newDeudor = {
+                id: Date.now(),
+                cliente: saleData.cliente || 'Cliente Desconocido',
+                deudaUsd: deudaUsd,
+                fecha: timestamp.split('T')[0],
+                estado: 'Pendiente'
+            };
+            globalState.deudores = globalState.deudores || [];
+            globalState.deudores.push(newDeudor);
+            io.emit('deudores_updated', globalState.deudores);
+            console.log(`[Crédito] Nueva deuda registrada para ${newDeudor.cliente}: $${newDeudor.deudaUsd.toFixed(2)}`);
+        }
+
+        // ── AUTO-INSERT PREPAGOS if prepago items ──────────────────────────
+        const prepagoItems = (saleData.items || []).filter(i => i.esPrepago);
+        if (prepagoItems.length > 0) {
+            globalState.prepagos = globalState.prepagos || [];
+            prepagoItems.forEach(item => {
+                globalState.prepagos.push({
+                    id: Date.now() + Math.random(),
+                    cliente: saleData.cliente || 'Cliente Desconocido',
+                    productoId: item.id,
+                    productoNombre: item.name,
+                    cantidad: item.quantity,
+                    metric: item.metric,
+                    montoUsd: item.price * item.quantity,
+                    fecha: new Date().toLocaleString(),
+                    estado: 'Pendiente'
+                });
+            });
+            io.emit('prepagos_updated', globalState.prepagos);
+            console.log(`[Prepago] ${prepagoItems.length} prepago(s) registrados para ${saleData.cliente}`);
+        }
+
+        globalState.movimientos = globalState.movimientos || [];
+        globalState.movimientos.push(saleRecord);
         saveState();
 
-        // Broadcast new sales history and updated metrics
-        io.emit('sales_updated', globalState.historialVentas);
+        io.emit('movimientos_updated', globalState.movimientos);
         io.emit('metricas_updated', {
             metricasGlobales: globalState.metricasGlobales,
             metricasMetodos: globalState.metricasMetodos

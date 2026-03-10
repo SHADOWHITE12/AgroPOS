@@ -33,7 +33,7 @@ const io = new Server(server, {
     }
 });
 
-const pool = require('./config/db.js');
+const supabase = require('./config/db.js');
 const inventarioInicial = require('./config/inventario_base.js');
 
 const STATE_FILE = path.join(__dirname, 'state.json');
@@ -89,12 +89,22 @@ io.on('connection', async (socket) => {
     console.log(`New client connected: ${socket.id} from ${socket.handshake.address}`);
 
     try {
-        const [productosRows] = await pool.query('SELECT * FROM productos');
-        const [cajaRows] = await pool.query('SELECT * FROM caja_diaria WHERE id = 1');
-        const [movimientosRows] = await pool.query('SELECT * FROM historial_ventas');
+        const { data: productosRows, error: prodErr } = await supabase.from('productos').select('*');
+        const { data: cajaRows, error: cajaErr } = await supabase.from('caja_diaria').select('*').eq('id', 1);
+        const { data: movimientosRows, error: movErr } = await supabase.from('historial_ventas').select('*');
+        // Obtener el último cierre de turno para filtrar métricas de Caja
+        const { data: cierresRows, error: cierresErr } = await supabase
+            .from('cierres_caja')
+            .select('created_at')
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+        if (prodErr) throw prodErr;
+        if (cajaErr) throw cajaErr;
+        if (movErr) throw movErr;
 
         // Mapear el historial desde la BD reconstruyendo los JSON
-        const movimientosFormateados = movimientosRows.map(row => ({
+        const movimientosFormateados = (movimientosRows || []).map(row => ({
             id: row.id,
             fechaHora: row.fechaHora,
             totalPagado: parseFloat(row.totalPagado),
@@ -112,7 +122,7 @@ io.on('connection', async (socket) => {
             descuentoMetodoPagoTotal: parseFloat(row.descuentoMetodoPagoTotal)
         }));
 
-        globalState.products = productosRows.map(p => ({
+        globalState.products = (productosRows || []).map(p => ({
             ...p,
             price: parseFloat(p.price),
             precioKilo: parseFloat(p.precioKilo),
@@ -124,7 +134,7 @@ io.on('connection', async (socket) => {
             stock: parseFloat(p.stock)
         }));
 
-        if (cajaRows.length > 0) {
+        if (cajaRows && cajaRows.length > 0) {
             const cajaObj = cajaRows[0];
             globalState.cajaBalances = {
                 usd: parseFloat(cajaObj.usd),
@@ -138,33 +148,33 @@ io.on('connection', async (socket) => {
         }
 
         globalState.movimientos = movimientosFormateados;
+        // Guardar el timestamp del último cierre de turno
+        if (cierresRows && cierresRows.length > 0) {
+            globalState.ultimoCierre = cierresRows[0].created_at;
+        } else {
+            // Si no hay cierres, usar una fecha muy antigua como referencia
+            globalState.ultimoCierre = new Date(0).toISOString();
+        }
 
     } catch (err) {
-        console.error("Error cargando el estado inicial desde MySQL:", err);
+        console.error("Error cargando el estado inicial desde Supabase:", err);
     }
 
-    // Send initial state to the newly connected client
-    socket.emit('initial_state', globalState);
+    // Send initial state to the newly connected client (incluye ultimoCierre para la Caja)
+    socket.emit('initial_state', { ...globalState, ultimoCierre: globalState.ultimoCierre || new Date(0).toISOString() });
 
     // Listen for product updates
     socket.on('update_products', async (newProducts) => {
         try {
-            const connection = await pool.getConnection();
-            await connection.query('START TRANSACTION');
-            await connection.query('TRUNCATE TABLE productos');
-            for (let p of newProducts) {
-                await connection.query(`
-                    INSERT INTO productos (id, name, price, precioKilo, precioSaco, pesoPorSaco, costoBase, gananciaSacoPct, gananciaKiloPct, stock, metric, icon)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                `, [p.id, p.name, p.price, p.precioKilo, p.precioSaco, p.pesoPorSaco, p.costoBase, p.gananciaSacoPct, p.gananciaKiloPct, p.stock, p.metric, p.icon]);
-            }
-            await connection.query('COMMIT');
-            connection.release();
+            await supabase.from('productos').delete().neq('id', -1);
+
+            const { error: insertErr } = await supabase.from('productos').insert(newProducts);
+            if (insertErr) throw insertErr;
 
             globalState.products = newProducts;
             io.emit('products_updated', newProducts);
         } catch (err) {
-            console.error('Error actualizando productos en MySQL:', err);
+            console.error('Error actualizando productos en Supabase:', err);
         }
     });
 
@@ -197,21 +207,19 @@ io.on('connection', async (socket) => {
 
         // DB Persistence for Caja
         try {
-            await pool.query(`
-                UPDATE caja_diaria 
-                SET usd = ?, bs = ?, digitalBs = ?, inicialUsd = ?, inicialBs = ?, isCajaAbierta = ?, exchangeRate = ?
-                WHERE id = 1
-            `, [
-                globalState.cajaBalances.usd || 0,
-                globalState.cajaBalances.bs || 0,
-                globalState.cajaBalances.digitalBs || 0,
-                globalState.cajaBalances.inicialUsd || 0,
-                globalState.cajaBalances.inicialBs || 0,
-                globalState.isCajaAbierta,
-                globalState.exchangeRate
-            ]);
+            const { error: cajaErr } = await supabase.from('caja_diaria').upsert({
+                id: 1,
+                usd: globalState.cajaBalances.usd || 0,
+                bs: globalState.cajaBalances.bs || 0,
+                digitalBs: globalState.cajaBalances.digitalBs || 0,
+                inicialUsd: globalState.cajaBalances.inicialUsd || 0,
+                inicialBs: globalState.cajaBalances.inicialBs || 0,
+                isCajaAbierta: globalState.isCajaAbierta,
+                exchangeRate: globalState.exchangeRate
+            });
+            if (cajaErr) throw cajaErr;
         } catch (err) {
-            console.error('Error updating caja in DB:', err);
+            console.error('Error updating caja in Supabase:', err);
         }
 
         // Track rate history
@@ -238,6 +246,63 @@ io.on('connection', async (socket) => {
 
         io.emit('caja_updated', globalState);
     });
+
+    // Listen for isolated caja closing (Cierre Z - Reporte de Turno)
+    socket.on('cerrar_caja', async (turnoTotales) => {
+        try {
+            console.log('[SISTEMA] Iniciando Cierre Z (Preservando Historial, Aislando Turno)...');
+            
+            // 1. Resetear balances de caja (Aislamiento de turno)
+            globalState.cajaBalances = { usd: 0, bs: 0, digitalBs: 0, inicialUsd: 0, inicialBs: 0 };
+            globalState.isCajaAbierta = false;
+
+            // 2. Conservar movimientos en memoria y base de datos para estadísticas globales
+            // globalState.movimientos = []; // MANTENER HISTORIAL PARA ESTAD.
+            
+            // 3. Registrar el cierre de turno en la tabla cierres_caja
+            const { data: cierreData, error: cierreErr } = await supabase.from('cierres_caja').insert({
+                ganancia_neta: turnoTotales?.gananciaNeta || 0,
+                total_pagado: turnoTotales?.totalPagado || 0,
+                total_mayor: turnoTotales?.totalMayor || 0,
+                total_detal: turnoTotales?.totalDetal || 0,
+                metodos_pago: turnoTotales?.metodosPago || {}
+            }).select('created_at').single();
+
+            if (cierreErr) {
+                console.error('[DATABASE] Error insertando cierre de turno:', cierreErr);
+            }
+
+            // 4. El nuevo ultimoCierre es el timestamp del cierre recién registrado
+            const nuevoUltimoCierre = cierreData?.created_at || new Date().toISOString();
+            globalState.ultimoCierre = nuevoUltimoCierre;
+
+            // 5. Actualizar estado de la caja en Supabase
+            await supabase.from('caja_diaria').upsert({
+                id: 1,
+                usd: 0,
+                bs: 0,
+                digitalBs: 0,
+                inicialUsd: 0,
+                inicialBs: 0,
+                isCajaAbierta: false,
+                exchangeRate: globalState.exchangeRate
+            });
+
+            // 6. Emitir evento de caja cerrada con el nuevo ultimoCierre para que el frontend lo use
+            io.emit('caja_cerrada', {
+                cajaBalances: globalState.cajaBalances,
+                isCajaAbierta: false,
+                movimientos: globalState.movimientos || [],
+                ultimoCierre: nuevoUltimoCierre
+            });
+            
+            console.log('[SISTEMA] Cierre Z completado. Nuevo ultimoCierre:', nuevoUltimoCierre);
+
+        } catch (err) {
+            console.error('[SISTEMA] Error crítico durante el cierre de caja:', err);
+        }
+    });
+
 
     // Listen for sales records
     socket.on('record_sale', async (saleRecord) => {
@@ -283,23 +348,28 @@ io.on('connection', async (socket) => {
         };
 
         try {
-            const connection = await pool.getConnection();
-            await connection.query('START TRANSACTION');
-
-            const ticketFecha = new Date(ticket.fechaHora).toISOString().slice(0, 19).replace('T', ' ');
+            const ticketFecha = new Date(ticket.fechaHora).toISOString();
 
             // 1. Insert ticket
-            await connection.query(`
-                INSERT INTO historial_ventas 
-                (id, fechaHora, totalPagado, gananciaNetaVenta, gananciaSacos, gananciaKilos, ventaBrutaSacos, ventaBrutaKilos, metodosPago, productos, exchangeRate, cliente, esCredito, promocionesAplicadas, descuentoMetodoPagoTotal)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `, [
-                ticket.id, ticketFecha, ticket.totalPagado, ticket.gananciaNetaVenta,
-                ticket.gananciaSacos, ticket.gananciaKilos, ticket.ventaBrutaSacos, ticket.ventaBrutaKilos,
-                JSON.stringify(ticket.metodoPago || []), JSON.stringify(ticket.productos || []),
-                ticket.exchangeRate || globalState.exchangeRate || 1, ticket.cliente || 'Cliente Genérico',
-                ticket.esCredito || false, ticket.promocionesAplicadas || false, ticket.descuentoMetodoPagoTotal || 0
-            ]);
+            const { error: insertErr } = await supabase.from('historial_ventas').insert({
+                id: ticket.id,
+                fechaHora: ticketFecha,
+                totalPagado: ticket.totalPagado,
+                gananciaNetaVenta: ticket.gananciaNetaVenta,
+                gananciaSacos: ticket.gananciaSacos,
+                gananciaKilos: ticket.gananciaKilos,
+                ventaBrutaSacos: ticket.ventaBrutaSacos,
+                ventaBrutaKilos: ticket.ventaBrutaKilos,
+                metodosPago: ticket.metodoPago || [],
+                productos: ticket.productos || [],
+                exchangeRate: ticket.exchangeRate || globalState.exchangeRate || 1,
+                cliente: ticket.cliente || 'Cliente Genérico',
+                esCredito: ticket.esCredito || false,
+                promocionesAplicadas: ticket.promocionesAplicadas || false,
+                descuentoMetodoPagoTotal: ticket.descuentoMetodoPagoTotal || 0
+            });
+
+            if (insertErr) throw insertErr;
 
             // 2. Decrement stock
             for (let item of saleRecord.items) {
@@ -312,17 +382,16 @@ io.on('connection', async (socket) => {
                         deduction = item.quantity / 50;
                     }
                 }
-                await connection.query('UPDATE productos SET stock = stock - ? WHERE id = ?', [deduction, item.id]);
 
-                // Update in-memory state implicitly for other sockets without DB requery
+                // Get current stock directly from in-memory state for calculation, then update Supabase
                 const memProduct = globalState.products.find(p => p.id === item.id);
                 if (memProduct) {
-                    memProduct.stock -= deduction;
+                    const newStock = memProduct.stock - deduction;
+                    await supabase.from('productos').update({ stock: newStock }).eq('id', item.id);
+                    // Update in-memory state implicitly
+                    memProduct.stock = newStock;
                 }
             }
-
-            await connection.query('COMMIT');
-            connection.release();
 
             if (!globalState.movimientos) globalState.movimientos = [];
             globalState.movimientos.push(ticket);
@@ -340,36 +409,41 @@ io.on('connection', async (socket) => {
     socket.on('login', async ({ username, password }, callback) => {
         console.log(`[AUTH] Intento de login: usuario="${username}"`);
         try {
-            const [rows] = await pool.query(`
-                SELECT u.*, r.nombre as rol_nombre
-                FROM usuarios u 
-                LEFT JOIN roles r ON u.rol_id = r.id 
-                WHERE u.username = ? AND u.activo = 1
-            `, [username]);
+            const { data: userRows, error: userErr } = await supabase
+                .from('usuarios')
+                .select('*, roles(nombre)')
+                .eq('username', username)
+                .eq('activo', true);
 
-            if (rows.length > 0) {
-                const user = rows[0];
+            if (userErr) throw userErr;
+
+            if (userRows && userRows.length > 0) {
+                const user = userRows[0];
 
                 const match = await bcrypt.compare(password, user.password);
 
                 if (match) {
-                    const { password: _, ...userSafe } = user;
+                    const { password: _, roles: userRoles, ...userSafe } = user;
+                    userSafe.rol_nombre = userRoles ? userRoles.nombre : null;
 
                     // Fetch permissions from relational tables
-                    const [permRows] = await pool.query(`
-                        SELECT p.modulo, p.accion 
-                        FROM role_permissions rp
-                        JOIN permisos p ON rp.permiso_id = p.id
-                        WHERE rp.role_id = ?
-                    `, [user.rol_id]);
+                    const { data: permRows, error: permErr } = await supabase
+                        .from('role_permissions')
+                        .select('permisos(modulo, accion)')
+                        .eq('role_id', user.rol_id);
+
+                    if (permErr) throw permErr;
 
                     // Reconstruct permissions object for frontend compatibility
                     const reconstructedPerms = {};
-                    permRows.forEach(p => {
-                        if (!reconstructedPerms[p.modulo]) {
-                            reconstructedPerms[p.modulo] = { leer: false, crear: false, editar: false, eliminar: false };
+                    (permRows || []).forEach(rp => {
+                        const p = rp.permisos;
+                        if (p) {
+                            if (!reconstructedPerms[p.modulo]) {
+                                reconstructedPerms[p.modulo] = { leer: false, crear: false, editar: false, eliminar: false };
+                            }
+                            reconstructedPerms[p.modulo][p.accion] = true;
                         }
-                        reconstructedPerms[p.modulo][p.accion] = true;
                     });
 
                     userSafe.permisos = reconstructedPerms;
@@ -390,11 +464,21 @@ io.on('connection', async (socket) => {
     // --- User Management Events (CRUD) --- 
     socket.on('get_usuarios', async (callback) => {
         try {
-            const [rows] = await pool.query(`
-                SELECT u.id, u.username, u.nombre, u.activo, u.rol_id, r.nombre as rol_nombre 
-                FROM usuarios u 
-                LEFT JOIN roles r ON u.rol_id = r.id
-            `);
+            const { data, error } = await supabase
+                .from('usuarios')
+                .select(`id, username, nombre, activo, rol_id, roles(nombre)`);
+
+            if (error) throw error;
+
+            const rows = (data || []).map(u => ({
+                id: u.id,
+                username: u.username,
+                nombre: u.nombre,
+                activo: u.activo,
+                rol_id: u.rol_id,
+                rol_nombre: u.roles ? u.roles.nombre : null
+            }));
+
             callback({ success: true, usuarios: rows });
         } catch (err) {
             console.error('Error fetching users:', err);
@@ -408,14 +492,15 @@ io.on('connection', async (socket) => {
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(password, salt);
 
-            await pool.query(
-                'INSERT INTO usuarios (username, password, nombre, rol_id, activo) VALUES (?, ?, ?, ?, ?)',
-                [username, hashedPassword, nombre, rol_id, activo]
-            );
+            const { error } = await supabase.from('usuarios').insert({
+                username, password: hashedPassword, nombre, rol_id, activo
+            });
+
+            if (error) throw error;
             callback({ success: true, message: 'Usuario creado exitosamente' });
         } catch (err) {
             console.error('Error creating user:', err);
-            if (err.code === 'ER_DUP_ENTRY') {
+            if (err.code === '23505' || err.code === 'ER_DUP_ENTRY') { // Handle both just in case
                 return callback({ success: false, message: 'El nombre de usuario ya existe' });
             }
             callback({ success: false, message: 'Error al crear usuario' });
@@ -425,24 +510,20 @@ io.on('connection', async (socket) => {
     socket.on('update_usuario', async (userData, callback) => {
         try {
             const { id, username, password, nombre, rol_id, activo } = userData;
+            let updatePayload = { username, nombre, rol_id, activo };
 
             if (password) {
                 const salt = await bcrypt.genSalt(10);
-                const hashedPassword = await bcrypt.hash(password, salt);
-                await pool.query(
-                    'UPDATE usuarios SET username=?, password=?, nombre=?, rol_id=?, activo=? WHERE id=?',
-                    [username, hashedPassword, nombre, rol_id, activo, id]
-                );
-            } else {
-                await pool.query(
-                    'UPDATE usuarios SET username=?, nombre=?, rol_id=?, activo=? WHERE id=?',
-                    [username, nombre, rol_id, activo, id]
-                );
+                updatePayload.password = await bcrypt.hash(password, salt);
             }
+
+            const { error } = await supabase.from('usuarios').update(updatePayload).eq('id', id);
+
+            if (error) throw error;
             callback({ success: true, message: 'Usuario actualizado exitosamente' });
         } catch (err) {
             console.error('Error updating user:', err);
-            if (err.code === 'ER_DUP_ENTRY') {
+            if (err.code === '23505' || err.code === 'ER_DUP_ENTRY') {
                 return callback({ success: false, message: 'El nombre de usuario ya existe' });
             }
             callback({ success: false, message: 'Error al actualizar usuario' });
@@ -451,7 +532,8 @@ io.on('connection', async (socket) => {
 
     socket.on('delete_usuario', async (id, callback) => {
         try {
-            await pool.query('DELETE FROM usuarios WHERE id = ?', [id]);
+            const { error } = await supabase.from('usuarios').delete().eq('id', id);
+            if (error) throw error;
             callback({ success: true, message: 'Usuario eliminado' });
         } catch (err) {
             console.error('Error deleting user:', err);
@@ -462,20 +544,24 @@ io.on('connection', async (socket) => {
     // --- Roles Management Events ---
     socket.on('get_roles', async (callback) => {
         try {
-            const [roles] = await pool.query('SELECT * FROM roles');
-            const [rolePerms] = await pool.query(`
-                SELECT rp.role_id, p.modulo, p.accion 
-                FROM role_permissions rp
-                JOIN permisos p ON rp.permiso_id = p.id
-            `);
+            const { data: roles, error: rolesErr } = await supabase.from('roles').select('*');
+            const { data: rolePerms, error: permsErr } = await supabase
+                .from('role_permissions')
+                .select('role_id, permisos(modulo, accion)');
 
-            const safeRoles = roles.map(r => {
+            if (rolesErr) throw rolesErr;
+            if (permsErr) throw permsErr;
+
+            const safeRoles = (roles || []).map(r => {
                 const perms = {};
-                rolePerms
+                (rolePerms || [])
                     .filter(rp => rp.role_id === r.id)
                     .forEach(rp => {
-                        if (!perms[rp.modulo]) perms[rp.modulo] = { leer: false, crear: false, editar: false, eliminar: false };
-                        perms[rp.modulo][rp.accion] = true;
+                        const p = rp.permisos;
+                        if (p) {
+                            if (!perms[p.modulo]) perms[p.modulo] = { leer: false, crear: false, editar: false, eliminar: false };
+                            perms[p.modulo][p.accion] = true;
+                        }
                     });
                 return { ...r, permisos: perms };
             });
@@ -489,26 +575,40 @@ io.on('connection', async (socket) => {
     socket.on('create_rol', async (rolData, callback) => {
         try {
             const { nombre, permisos } = rolData;
-            const [result] = await pool.query('INSERT INTO roles (nombre) VALUES (?)', [nombre]);
-            const roleId = result.insertId;
+
+            const { data: newRole, error: roleError } = await supabase
+                .from('roles')
+                .insert({ nombre })
+                .select()
+                .single();
+
+            if (roleError) throw roleError;
+            const roleId = newRole.id;
 
             // Save permissions to role_permissions
-            const [allPermisos] = await pool.query('SELECT id, slug FROM permisos');
+            const { data: allPermisos } = await supabase.from('permisos').select('id, slug');
+
+            const rpInserts = [];
             for (const modulo in permisos) {
                 for (const accion in permisos[modulo]) {
                     if (permisos[modulo][accion] === true) {
                         const slug = `${modulo}.${accion}`;
-                        const pMatch = allPermisos.find(p => p.slug === slug);
+                        const pMatch = (allPermisos || []).find(p => p.slug === slug);
                         if (pMatch) {
-                            await pool.query('INSERT INTO role_permissions (role_id, permiso_id) VALUES (?, ?)', [roleId, pMatch.id]);
+                            rpInserts.push({ role_id: roleId, permiso_id: pMatch.id });
                         }
                     }
                 }
             }
+
+            if (rpInserts.length > 0) {
+                await supabase.from('role_permissions').insert(rpInserts);
+            }
+
             callback({ success: true, message: 'Rol creado exitosamente' });
         } catch (err) {
             console.error('Error creating rol:', err);
-            if (err.code === 'ER_DUP_ENTRY') {
+            if (err.code === '23505') {
                 return callback({ success: false, message: 'El nombre del rol ya existe' });
             }
             callback({ success: false, message: 'Error al crear rol' });
@@ -518,26 +618,36 @@ io.on('connection', async (socket) => {
     socket.on('update_rol', async (rolData, callback) => {
         try {
             const { id, nombre, permisos } = rolData;
-            await pool.query('UPDATE roles SET nombre=? WHERE id=?', [nombre, id]);
+
+            const { error: roleErr } = await supabase.from('roles').update({ nombre }).eq('id', id);
+            if (roleErr) throw roleErr;
 
             // Sync permissions
-            await pool.query('DELETE FROM role_permissions WHERE role_id = ?', [id]);
-            const [allPermisos] = await pool.query('SELECT id, slug FROM permisos');
+            await supabase.from('role_permissions').delete().eq('role_id', id);
+
+            const { data: allPermisos } = await supabase.from('permisos').select('id, slug');
+            const rpInserts = [];
+
             for (const modulo in permisos) {
                 for (const accion in permisos[modulo]) {
                     if (permisos[modulo][accion] === true) {
                         const slug = `${modulo}.${accion}`;
-                        const pMatch = allPermisos.find(p => p.slug === slug);
+                        const pMatch = (allPermisos || []).find(p => p.slug === slug);
                         if (pMatch) {
-                            await pool.query('INSERT INTO role_permissions (role_id, permiso_id) VALUES (?, ?)', [id, pMatch.id]);
+                            rpInserts.push({ role_id: id, permiso_id: pMatch.id });
                         }
                     }
                 }
             }
+
+            if (rpInserts.length > 0) {
+                await supabase.from('role_permissions').insert(rpInserts);
+            }
+
             callback({ success: true, message: 'Rol actualizado exitosamente' });
         } catch (err) {
             console.error('Error updating rol:', err);
-            if (err.code === 'ER_DUP_ENTRY') {
+            if (err.code === '23505') {
                 return callback({ success: false, message: 'El nombre del rol ya existe' });
             }
             callback({ success: false, message: 'Error al actualizar rol' });
@@ -546,8 +656,8 @@ io.on('connection', async (socket) => {
 
     socket.on('delete_rol', async (id, callback) => {
         try {
-            // Reasignar usuarios a NULL u otro rol por omisión, o dejar que la BD actue ON DELETE SET NULL
-            await pool.query('DELETE FROM roles WHERE id = ?', [id]);
+            const { error } = await supabase.from('roles').delete().eq('id', id);
+            if (error) throw error;
             callback({ success: true, message: 'Rol eliminado exitosamente' });
         } catch (err) {
             console.error('Error deleting rol:', err);
@@ -558,23 +668,23 @@ io.on('connection', async (socket) => {
     // --- Backup Management Events ---
     socket.on('backup_database_json', async (callback) => {
         try {
-            console.log('Generando respaldo completo de la Base de Datos...');
+            console.log('Generando respaldo completo de la Base de Datos Supabase...');
             const backupData = {};
 
-            const [productos] = await pool.query('SELECT * FROM productos');
-            backupData.productos = productos;
+            const { data: productos } = await supabase.from('productos').select('*');
+            backupData.productos = productos || [];
 
-            const [ventas] = await pool.query('SELECT * FROM historial_ventas');
-            backupData.historial_ventas = ventas;
+            const { data: ventas } = await supabase.from('historial_ventas').select('*');
+            backupData.historial_ventas = ventas || [];
 
-            const [caja] = await pool.query('SELECT * FROM caja_diaria');
-            backupData.caja_diaria = caja;
+            const { data: caja } = await supabase.from('caja_diaria').select('*');
+            backupData.caja_diaria = caja || [];
 
-            const [roles] = await pool.query('SELECT * FROM roles');
-            backupData.roles = roles;
+            const { data: roles } = await supabase.from('roles').select('*');
+            backupData.roles = roles || [];
 
-            const [usuarios] = await pool.query('SELECT id, username, nombre, rol_id, activo FROM usuarios'); // Omitir passwords del backup json por seguridad, o incluirlos encriptados si se desea
-            backupData.usuarios = usuarios;
+            const { data: usuarios } = await supabase.from('usuarios').select('id, username, nombre, rol_id, activo');
+            backupData.usuarios = usuarios || [];
 
             console.log('Respaldo generado exitosamente.');
             callback({ success: true, data: backupData });
@@ -588,7 +698,8 @@ io.on('connection', async (socket) => {
     socket.on('update_profile', async (profileData, callback) => {
         try {
             const { id, username, nombre } = profileData;
-            await pool.query('UPDATE usuarios SET username=?, nombre=? WHERE id=?', [username, nombre, id]);
+            const { error } = await supabase.from('usuarios').update({ username, nombre }).eq('id', id);
+            if (error) throw error;
             callback({ success: true, message: 'Perfil actualizado' });
         } catch (err) {
             console.error('Error updating profile:', err);
@@ -599,17 +710,19 @@ io.on('connection', async (socket) => {
     socket.on('cambiar_password', async (data, callback) => {
         try {
             const { id, currentPassword, newPassword } = data;
-            const [rows] = await pool.query('SELECT password FROM usuarios WHERE id = ?', [id]);
+            const { data: user, error: userErr } = await supabase.from('usuarios').select('password').eq('id', id).single();
 
-            if (rows.length === 0) return callback({ success: false, message: 'Usuario no encontrado' });
+            if (userErr || !user) return callback({ success: false, message: 'Usuario no encontrado' });
 
-            const match = await bcrypt.compare(currentPassword, rows[0].password);
+            const match = await bcrypt.compare(currentPassword, user.password);
             if (!match) return callback({ success: false, message: 'La contraseña actual es incorrecta' });
 
             const salt = await bcrypt.genSalt(10);
             const hashedNew = await bcrypt.hash(newPassword, salt);
 
-            await pool.query('UPDATE usuarios SET password=? WHERE id=?', [hashedNew, id]);
+            const { error: updateErr } = await supabase.from('usuarios').update({ password: hashedNew }).eq('id', id);
+            if (updateErr) throw updateErr;
+
             callback({ success: true, message: 'Contraseña actualizada exitosamente' });
 
         } catch (err) {
@@ -623,246 +736,23 @@ io.on('connection', async (socket) => {
     });
 });
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
-async function initDB() {
-    console.log('Conectando e inicializando MySQL Database (agro_db)...');
-    try {
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS productos (
-                id INT PRIMARY KEY,
-                name VARCHAR(255),
-                price DECIMAL(10,2),
-                precioKilo DECIMAL(10,2) DEFAULT 0,
-                precioSaco DECIMAL(10,2) DEFAULT 0,
-                pesoPorSaco DECIMAL(10,2),
-                costoBase DECIMAL(10,2),
-                gananciaSacoPct DECIMAL(10,2),
-                gananciaKiloPct DECIMAL(10,2),
-                stock DECIMAL(10,2),
-                metric VARCHAR(50),
-                icon VARCHAR(50)
-            )
-        `);
-
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS historial_ventas (
-                id VARCHAR(255) PRIMARY KEY,
-                fechaHora DATETIME,
-                totalPagado DECIMAL(10,2),
-                gananciaNetaVenta DECIMAL(10,2),
-                gananciaSacos DECIMAL(10,2),
-                gananciaKilos DECIMAL(10,2),
-                ventaBrutaSacos DECIMAL(10,2),
-                ventaBrutaKilos DECIMAL(10,2),
-                metodosPago JSON,
-                productos JSON,
-                exchangeRate DECIMAL(10,2),
-                cliente VARCHAR(255),
-                esCredito BOOLEAN,
-                promocionesAplicadas BOOLEAN,
-                descuentoMetodoPagoTotal DECIMAL(10,2)
-            )
-        `);
-
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS caja_diaria (
-                id INT PRIMARY KEY DEFAULT 1,
-                usd DECIMAL(10,2),
-                bs DECIMAL(10,2),
-                digitalBs DECIMAL(10,2),
-                inicialUsd DECIMAL(10,2),
-                inicialBs DECIMAL(10,2),
-                isCajaAbierta BOOLEAN,
-                exchangeRate DECIMAL(10,2)
-            )
-        `);
-
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS permisos (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                modulo VARCHAR(50) NOT NULL,
-                accion VARCHAR(50) NOT NULL,
-                slug VARCHAR(100) UNIQUE NOT NULL
-            )
-        `);
-
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS role_permissions (
-                role_id INT,
-                permiso_id INT,
-                PRIMARY KEY (role_id, permiso_id),
-                FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
-                FOREIGN KEY (permiso_id) REFERENCES permisos(id) ON DELETE CASCADE
-            )
-        `);
-
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS roles (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                nombre VARCHAR(100) UNIQUE NOT NULL,
-                permisos JSON
-            )
-        `);
-
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS usuarios (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                username VARCHAR(50) UNIQUE NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                nombre VARCHAR(100),
-                activo BOOLEAN DEFAULT TRUE,
-                rol_id INT,
-                FOREIGN KEY (rol_id) REFERENCES roles(id) ON DELETE SET NULL
-            )
-        `);
-
-        // Migración forzada: Asegurar que rol_id existe si la tabla ya existía sin él
-        try { await pool.query('ALTER TABLE usuarios ADD COLUMN rol_id INT AFTER activo'); } catch (e) { }
-        try { await pool.query('ALTER TABLE usuarios ADD CONSTRAINT fk_rol_id FOREIGN KEY (rol_id) REFERENCES roles(id) ON DELETE SET NULL'); } catch (e) { }
-
-        // REPARACIÓN: Asignar rol_id a usuarios que quedaron huérfanos tras la migración
-        await pool.query("UPDATE usuarios SET rol_id = 1 WHERE username = 'admin' AND rol_id IS NULL");
-        await pool.query("UPDATE usuarios SET rol_id = 2 WHERE username = 'caja' AND rol_id IS NULL");
-        // Por si hay otros usuarios sin rol, asignarles Cajero por defecto
-        await pool.query("UPDATE usuarios SET rol_id = 2 WHERE rol_id IS NULL");
-
-        // Ejecutar migraciones si la BD es antigua (ignorar errores si ya se aplicaron)
-        try { await pool.query('ALTER TABLE usuarios DROP COLUMN rol'); } catch (e) { }
-        try { await pool.query('ALTER TABLE usuarios DROP COLUMN permisos'); } catch (e) { }
-
-        // Check if we need to seed products from the loaded state.json
-        const [rows] = await pool.query('SELECT COUNT(*) as count FROM productos');
-        if (rows[0].count === 0 && globalState.products && globalState.products.length > 0) {
-            console.log('Migrando productos de state.json a MySQL...');
-            for (let p of globalState.products) {
-                await pool.query(`
-                    INSERT INTO productos (id, name, price, precioKilo, precioSaco, pesoPorSaco, costoBase, gananciaSacoPct, gananciaKiloPct, stock, metric, icon)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                `, [p.id, p.name, p.price, p.precioKilo, p.precioSaco, p.pesoPorSaco, p.costoBase, p.gananciaSacoPct, p.gananciaKiloPct, p.stock, p.metric, p.icon]);
-            }
-            console.log('Productos migrados exitosamente a MySQL.');
-        }
-
-        // Initialize caja table if empty
-        const [cajaRows] = await pool.query('SELECT COUNT(*) as count FROM caja_diaria');
-        if (cajaRows[0].count === 0) {
-            await pool.query(`
-                INSERT INTO caja_diaria (id, usd, bs, digitalBs, inicialUsd, inicialBs, isCajaAbierta, exchangeRate)
-                VALUES (1, ?, ?, ?, ?, ?, ?, ?)
-            `, [
-                globalState.cajaBalances.usd || 0,
-                globalState.cajaBalances.bs || 0,
-                globalState.cajaBalances.digitalBs || 0,
-                globalState.cajaBalances.inicialUsd || 0,
-                globalState.cajaBalances.inicialBs || 0,
-                globalState.isCajaAbierta || false,
-                globalState.exchangeRate || 36.5
-            ]);
-            console.log('Métricas de Caja Diaria inicializadas en MySQL.');
-        }
-
-        const [permisosCount] = await pool.query('SELECT COUNT(*) as count FROM permisos');
-        if (permisosCount[0].count === 0) {
-            console.log('Sembrando catálogo de permisos relacionales...');
-            const modulos = ['ventas', 'caja', 'inventario', 'deudores', 'prepagos', 'promociones', 'estadisticas', 'usuarios', 'roles', 'ajustes'];
-            const acciones = ['leer', 'crear', 'editar', 'eliminar'];
-
-            for (const modulo of modulos) {
-                for (const accion of acciones) {
-                    const slug = `${modulo}.${accion}`;
-                    await pool.query('INSERT IGNORE INTO permisos (modulo, accion, slug) VALUES (?, ?, ?)', [modulo, accion, slug]);
-                }
-            }
-        }
-
-        const [rolesDesc] = await pool.query('SELECT COUNT(*) as count FROM roles');
-        if (rolesDesc[0].count === 0) {
-            const adminPermisos = JSON.stringify({
-                ventas: { leer: true, crear: true, editar: true, eliminar: true },
-                caja: { leer: true, crear: true, editar: true, eliminar: true },
-                inventario: { leer: true, crear: true, editar: true, eliminar: true },
-                deudores: { leer: true, crear: true, editar: true, eliminar: true },
-                prepagos: { leer: true, crear: true, editar: true, eliminar: true },
-                promociones: { leer: true, crear: true, editar: true, eliminar: true },
-                estadisticas: { leer: true, crear: true, editar: true, eliminar: true },
-                usuarios: { leer: true, crear: true, editar: true, eliminar: true },
-                roles: { leer: true, crear: true, editar: true, eliminar: true }
-            });
-
-            const cajeroPermisos = JSON.stringify({
-                ventas: { leer: true, crear: true, editar: false, eliminar: false },
-                caja: { leer: true, crear: true, editar: false, eliminar: false },
-                inventario: { leer: false, crear: false, editar: false, eliminar: false },
-                deudores: { leer: false, crear: false, editar: false, eliminar: false },
-                prepagos: { leer: false, crear: false, editar: false, eliminar: false },
-                promociones: { leer: false, crear: false, editar: false, eliminar: false },
-                estadisticas: { leer: false, crear: false, editar: false, eliminar: false },
-                usuarios: { leer: false, crear: false, editar: false, eliminar: false },
-                roles: { leer: false, crear: false, editar: false, eliminar: false }
-            });
-
-            await pool.query("INSERT INTO roles (id, nombre, permisos) VALUES (1, 'Administrador', ?)", [adminPermisos]);
-            await pool.query("INSERT INTO roles (id, nombre, permisos) VALUES (2, 'Cajero Base', ?)", [cajeroPermisos]);
-            console.log('Tabla de roles inicializada con Administrador y Cajero.');
-        }
-
-        // MIGRACIÓN DE JSON A RELACIONAL: Si role_permissions está vacío, migrar desde roles.permisos
-        const [rolePermsCount] = await pool.query('SELECT COUNT(*) as count FROM role_permissions');
-        if (rolePermsCount[0].count === 0) {
-            console.log('Migrando permisos de JSON a tablas relacionales...');
-            const [allRoles] = await pool.query('SELECT id, permisos FROM roles');
-            const [allPermisos] = await pool.query('SELECT id, slug FROM permisos');
-
-            for (const rol of allRoles) {
-                if (!rol.permisos) continue;
-                const permsObj = typeof rol.permisos === 'string' ? JSON.parse(rol.permisos) : rol.permisos;
-
-                for (const modulo in permsObj) {
-                    for (const accion in permsObj[modulo]) {
-                        if (permsObj[modulo][accion] === true) {
-                            const slug = `${modulo}.${accion}`;
-                            const pMatch = allPermisos.find(p => p.slug === slug);
-                            if (pMatch) {
-                                await pool.query('INSERT IGNORE INTO role_permissions (role_id, permiso_id) VALUES (?, ?)', [rol.id, pMatch.id]);
-                            }
-                        }
-                    }
-                }
-            }
-            console.log('Migración relacional completada.');
-        }
-
-        // AUTO-REPARACIÓN: Asegurar que el Administrador (ID 1) siempre tenga TODOS los permisos
-        console.log('Verificando acceso total para el Administrador...');
-        const [allPerms] = await pool.query('SELECT id FROM permisos');
-        for (const p of allPerms) {
-            await pool.query('INSERT IGNORE INTO role_permissions (role_id, permiso_id) VALUES (?, ?)', [1, p.id]);
-        }
-        console.log('Permisos de Administrador actualizados a nivel relacional.');
-
-        // Initialize default admin user if table is empty
-        const [userRows] = await pool.query('SELECT COUNT(*) as count FROM usuarios');
-        if (userRows[0].count === 0) {
-            const salt = await bcrypt.genSalt(10);
-            const hashAdmin = await bcrypt.hash('123456', salt);
-            const hashCaja = await bcrypt.hash('caja123', salt);
-
-            await pool.query(`
-                INSERT INTO usuarios (username, password, nombre, rol_id, activo)
-                VALUES ('admin', ?, 'Administrador Principal', 1, true),
-                       ('caja', ?, 'Cajero Turno', 2, true)
-            `, [hashAdmin, hashCaja]);
-            console.log('Usuarios por defecto inicializados con nuevos role IDs relacionados.');
-        }
-
-    } catch (err) {
-        console.error('Error inicializando base de datos MySQL:', err);
-    }
+// En PRODUCCIÓN: servir el frontend compilado (Vite build) como archivos estáticos.
+// Express asume el rol de servidor web, entregando index.html para cualquier ruta
+// que no sea un API/WebSocket. Esto permite el patrón de monolito en Render/Railway.
+const clientDistPath = path.join(__dirname, 'client', 'dist');
+if (require('fs').existsSync(clientDistPath)) {
+    app.use(express.static(clientDistPath));
+    // Catch-all: devuelve index.html para rutas de cliente (React Router)
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(clientDistPath, 'index.html'));
+    });
+    console.log(`[SERVIDOR] Sirviendo frontend desde: ${clientDistPath}`);
+} else {
+    console.log('[SERVIDOR] Modo desarrollo: frontend NO encontrado en client/dist');
 }
 
-initDB().then(() => {
-    server.listen(PORT, '0.0.0.0', () => {
-        console.log(`WebSocket server running on port ${PORT} connected to MySQL.`);
-    });
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Servidor corriendo en puerto ${PORT} — Conectado a Supabase.`);
 });

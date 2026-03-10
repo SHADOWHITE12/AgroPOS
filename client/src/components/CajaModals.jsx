@@ -1,16 +1,33 @@
 import React from 'react';
+import {
+    X,
+    Sun,
+    TrendingUp,
+    DollarSign,
+    RefreshCw,
+    ArrowRight,
+    CheckCircle2,
+    AlertCircle,
+    Clock,
+    Wallet
+} from 'lucide-react';
 
-export function Modal({ isOpen, title, onClose, children }) {
+export function Modal({ isOpen, title, onClose, children, maxWidth = 'max-w-md' }) {
     if (!isOpen) return null;
 
     return (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
-            <div style={{ backgroundColor: 'var(--white)', borderRadius: 'var(--radius-lg)', width: '90%', maxWidth: '500px', boxShadow: 'var(--shadow-lg)', overflow: 'hidden' }}>
-                <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h2 style={{ fontSize: '1.25rem', color: 'var(--primary)' }}>{title}</h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
+        <div className="modal-overlay activo">
+            <div className={`modal-caja relative ${maxWidth} animate-modalEnter !p-10`} style={{ overflowY: 'auto', maxHeight: '90vh' }}>
+                <div className="flex justify-between items-center mb-8">
+                    <h2 className="text-xl font-black text-slate-800 uppercase tracking-tighter">{title}</h2>
+                    <button
+                        onClick={onClose}
+                        className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all"
+                    >
+                        <X size={20} />
+                    </button>
                 </div>
-                <div style={{ padding: '2rem' }}>
+                <div>
                     {children}
                 </div>
             </div>
@@ -23,7 +40,6 @@ export function AperturaModal({ isOpen, onConfirm }) {
     const [usd, setUsd] = React.useState('');
     const [bs, setBs] = React.useState('');
 
-    // La apertura exige que la tasa sea válida (>0) y al menos un monto en gaveta (aunque sea 0)
     const isValido = parseFloat(tasa) > 0 && usd !== '' && bs !== '';
     const totalCalculado = isValido ? (parseFloat(usd) || 0) + ((parseFloat(bs) || 0) / parseFloat(tasa)) : 0;
 
@@ -45,65 +61,62 @@ export function AperturaModal({ isOpen, onConfirm }) {
         }, 800);
     };
 
+    if (!isOpen) return null;
+
     return (
-        <div className={`modal-overlay ${isOpen ? 'activo' : ''}`}>
-            <div className="modal-caja">
+        <div className="modal-overlay activo">
+            <div className="modal-caja animate-modalEnter">
                 <div className="modal-header-elite">
                     <span className="icono-sol">☀️</span>
-                    <h2>APERTURA DE CAJA</h2>
+                    <h2>Apertura de Caja</h2>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2 italic">Sincronización de saldos</p>
                 </div>
 
-                <div className="modal-body">
-                    <div className="input-grupo-elite" style={{ marginBottom: '1rem', borderLeft: '4px solid var(--secondary)' }}>
+                <div className="space-y-4">
+                    <div className="input-grupo-elite">
                         <label>
-                            <span>📈</span>
-                            Tasa del Día (Bs/$)
+                            <TrendingUp size={14} className="text-blue-500" /> TASA DE CAMBIO (BS/$)
                         </label>
                         <input
                             type="number"
-                            placeholder="Ej. 36.50"
+                            placeholder="0.00"
                             value={tasa}
                             onChange={(e) => setTasa(e.target.value)}
                         />
                     </div>
 
-                    <div className="input-grupo-elite">
-                        <label>
-                            <span>💵</span>
-                            Fondo Gaveta ($)
-                        </label>
-                        <input
-                            type="number"
-                            placeholder="0.00"
-                            value={usd}
-                            onChange={(e) => setUsd(e.target.value)}
-                        />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="input-grupo-elite">
+                            <label>
+                                <DollarSign size={14} className="text-emerald-500" /> GAVETA ($)
+                            </label>
+                            <input
+                                type="number"
+                                placeholder="0.00"
+                                value={usd}
+                                onChange={(e) => setUsd(e.target.value)}
+                            />
+                        </div>
+                        <div className="input-grupo-elite">
+                            <label>
+                                <Wallet size={14} className="text-[#52B788]" /> GAVETA (BS)
+                            </label>
+                            <input
+                                type="number"
+                                placeholder="0.00"
+                                value={bs}
+                                onChange={(e) => setBs(e.target.value)}
+                            />
+                        </div>
                     </div>
-
-                    <div className="input-grupo-elite">
-                        <label>
-                            <span>💶</span>
-                            Fondo Gaveta (Bs)
-                        </label>
-                        <input
-                            type="number"
-                            placeholder="0.00"
-                            value={bs}
-                            onChange={(e) => setBs(e.target.value)}
-                        />
-                    </div>
-
-                    <button className="btn-usar-cierre">
-                        <span>🔄</span> Usar cierre de ayer
-                    </button>
 
                     <button
-                        className={`btn-abrir-elite ${isSuccess ? 'exito' : ''}`}
+                        className="btn-abrir-elite mt-4"
                         disabled={!isValido || isSuccess}
                         onClick={handleAbrir}
+                        style={{ background: isSuccess ? '#10B981' : undefined }}
                     >
-                        {isSuccess ? '✓ CAJA ABIERTA' :
-                            isValido ? `ABRIR CON $${totalCalculado.toFixed(2)}` : 'ABRIR CAJA'}
+                        {isSuccess ? '✓ JORNADA INICIADA' : isValido ? `INICIAR CON $${totalCalculado.toFixed(2)}` : 'COMPLETA LOS DATOS'}
                     </button>
                 </div>
             </div>
@@ -113,48 +126,68 @@ export function AperturaModal({ isOpen, onConfirm }) {
 
 export function CambioDivisasModal({ isOpen, onClose }) {
     return (
-        <Modal isOpen={isOpen} title="🔄 CAMBIO DE DIVISAS" onClose={onClose}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 40px 1fr', gap: '0.5rem', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>DESDE</label>
-                        <select className="search-input" style={{ padding: '0.5rem' }}>
-                            <option>$ Dólares</option>
-                            <option>Bs Bolívares</option>
-                        </select>
+        <Modal isOpen={isOpen} title="Cambio de Divisas" onClose={onClose} maxWidth="max-w-sm">
+            <div className="space-y-8">
+                <div className="flex items-center justify-between gap-4 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
+                    <div className="flex flex-col items-center gap-1 flex-1">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Desde</span>
+                        <div className="text-xl font-black text-slate-800">$</div>
                     </div>
-                    <div style={{ textAlign: 'center', fontSize: '1.25rem', marginTop: '1rem' }}>➔</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>HACIA</label>
-                        <select className="search-input" style={{ padding: '0.5rem' }}>
-                            <option>Bs Bolívares</option>
-                            <option>$ Dólares</option>
-                        </select>
+                    <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-blue-500/40">
+                        <ArrowRight size={20} />
+                    </div>
+                    <div className="flex flex-col items-center gap-1 flex-1">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Hacia</span>
+                        <div className="text-xl font-black text-slate-800 italic font-serif">Bs</div>
                     </div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <label style={{ fontWeight: 600, fontSize: '0.85rem' }}>MONTO A CAMBIAR</label>
-                    <input type="number" className="search-input" placeholder="0.00" style={{ padding: '0.75rem' }} />
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Monto a convertir</label>
+                    <div className="relative">
+                        <DollarSign size={18} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" />
+                        <input
+                            type="number"
+                            placeholder="0.00"
+                            className="w-full bg-slate-50 border-none outline-none pl-12 pr-6 py-4 rounded-2xl text-lg font-black text-slate-800"
+                        />
+                    </div>
                 </div>
 
-                <div style={{ backgroundColor: 'var(--bg-color)', padding: '1rem', borderRadius: 'var(--radius-md)', fontSize: '0.9rem' }}>
-                    <strong>Recibirás:</strong> <span style={{ color: 'var(--secondary)', fontWeight: 'bold' }}>Bs 1,825.00</span>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Tasa aplicada: 36.50</div>
+                <div className="p-6 bg-blue-50 rounded-[2rem] border border-blue-100/50 space-y-2 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-5">
+                        <RefreshCw size={64} className="text-blue-600" />
+                    </div>
+                    <div>
+                        <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest block">Recibirás estimado</span>
+                        <span className="text-2xl font-black text-blue-600 tracking-tighter">Bs 1,825.00</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-[9px] font-bold text-blue-400/80 italic">
+                        <AlertCircle size={10} /> Tasa aplicada: 36.50
+                    </div>
                 </div>
 
-                <button className="btn-cobrar">CONFIRMAR CAMBIO</button>
+                <button className="w-full py-5 rounded-3xl bg-blue-600 text-white font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all">
+                    Confirmar Cambio
+                </button>
             </div>
         </Modal>
     );
 }
 
 export function Toast({ message, type = 'info' }) {
-    const bgColor = type === 'success' ? 'var(--secondary)' : type === 'error' ? 'var(--danger)' : 'var(--primary)';
     return (
-        <div style={{ position: 'fixed', bottom: '2rem', left: '50%', transform: 'translateX(-50%)', backgroundColor: bgColor, color: 'white', padding: '1rem 2rem', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', fontWeight: 600, zIndex: 2000, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span>🔔</span>
-            {message}
+        <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[3000] px-8 py-4 rounded-3xl shadow-2xl flex items-center gap-4 animate-slideUp animate-duration-300 ${type === 'success' ? 'bg-[#D8F3DC] text-[#1B4332] border border-[#52B788]/20' :
+            type === 'error' ? 'bg-red-50 text-red-600 border border-red-100' :
+                'bg-slate-900 text-white'
+            }`}>
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${type === 'success' ? 'bg-[#52B788] text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                    'bg-blue-500 text-white'
+                }`}>
+                {type === 'success' ? <CheckCircle2 size={16} /> : type === 'error' ? <AlertCircle size={16} /> : <Clock size={16} />}
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest">{message}</span>
         </div>
     );
 }

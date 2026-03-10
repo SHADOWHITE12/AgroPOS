@@ -1,7 +1,20 @@
 import React, { useState } from 'react';
 import Swal from 'sweetalert2';
+import {
+    Package,
+    Plus,
+    Minus,
+    Edit3,
+    Trash2,
+    Save,
+    Search,
+    TrendingUp,
+    AlertCircle,
+    CheckCircle2,
+    X
+} from 'lucide-react';
 
-function InventoryView({ products, setProducts, exchangeRate, prepagos, setPrepagos, hasAccess }) {
+function InventoryView({ products, setProducts, exchangeRate, prepagos, setPrepagos, hasAccess, movimientos = [] }) {
     const [isAddProductOpen, setIsAddProductOpen] = useState(false);
     const [newProduct, setNewProduct] = useState({
         name: '',
@@ -13,6 +26,30 @@ function InventoryView({ products, setProducts, exchangeRate, prepagos, setPrepa
 
     const [isEditProductOpen, setIsEditProductOpen] = useState(false);
     const [productToEdit, setProductToEdit] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortBy, setSortBy] = useState('az'); // 'az' | 'stock-desc' | 'stock-asc' | 'popular'
+
+    // Calcular popularidad desde historial de ventas
+    const popularityMap = React.useMemo(() => {
+        const map = {};
+        (movimientos || []).forEach(ticket => {
+            (ticket.productos || []).forEach(item => {
+                map[item.id] = (map[item.id] || 0) + (item.quantity || 1);
+            });
+        });
+        return map;
+    }, [movimientos]);
+
+    const sortedFilteredProducts = React.useMemo(() => {
+        return [...(products || [])]
+            .filter(p => (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()))
+            .sort((a, b) => {
+                if (sortBy === 'stock-desc') return (b.stock || 0) - (a.stock || 0);
+                if (sortBy === 'stock-asc')  return (a.stock || 0) - (b.stock || 0);
+                if (sortBy === 'popular') return (popularityMap[b.id] || 0) - (popularityMap[a.id] || 0);
+                return (a.name || '').localeCompare(b.name || '');
+            });
+    }, [products, searchTerm, sortBy, popularityMap]);
 
     const handleCalcPrice = (costo, gananciaPct) => {
         if (!costo || !gananciaPct) return 0;
@@ -249,183 +286,298 @@ function InventoryView({ products, setProducts, exchangeRate, prepagos, setPrepa
     };
 
     return (
-        <div className="workspace" style={{ padding: '1rem md:2rem', display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto', backgroundColor: 'var(--color-bg-main)', flex: 1, width: '100%' }}>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>📦 Gestión de Inventario</h2>
-                {hasAccess('inventario', 'crear') && (
-                    <button
-                        className="btn-mobile-full"
-                        style={{ padding: '10px 20px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}
-                        onClick={() => setIsAddProductOpen(true)}
-                    >
-                        ➕ Añadir Producto
-                    </button>
-                )}
+        <div className="full-tab-container inventory-inner animate-fadeIn">
+            {/* Header: Title + Search/Sort + Add Button */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                    <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tight flex items-center gap-3">
+                        <Package size={28} className="text-[#52B788]" />
+                        Gestión de Inventario
+                    </h2>
+                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Control de existencias y precios</p>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', justifyContent: 'flex-end', flex: 1 }}>
+                    {/* Search */}
+                    <div style={{ position: 'relative', minWidth: '180px', maxWidth: '260px', flex: 1 }}>
+                        <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#95A5A6' }} />
+                        <input
+                            type="text"
+                            placeholder="Buscar producto..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            style={{
+                                width: '100%',
+                                padding: '10px 12px 10px 32px',
+                                background: 'white',
+                                border: '1px solid #E9ECEF',
+                                borderRadius: '10px',
+                                fontSize: '12px',
+                                fontWeight: '700',
+                                color: '#2C3E50',
+                                outline: 'none',
+                                boxSizing: 'border-box'
+                            }}
+                        />
+                    </div>
+
+                    {/* Sort Pills */}
+                    <div style={{ display: 'flex', background: '#F1F5F9', padding: '3px', borderRadius: '10px', gap: '2px', flexShrink: 0 }}>
+                        {[['az', 'A-Z'], ['stock-desc', '📦 Mayor'], ['stock-asc', '⚠️ Menor'], ['popular', '🔥 Top']].map(([val, label]) => (
+                            <button
+                                key={val}
+                                onClick={() => setSortBy(val)}
+                                style={{
+                                    padding: '6px 12px',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    fontSize: '10px',
+                                    fontWeight: '900',
+                                    cursor: 'pointer',
+                                    background: sortBy === val ? 'white' : 'transparent',
+                                    color: sortBy === val ? '#2C3E50' : '#95A5A6',
+                                    boxShadow: sortBy === val ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
+                                    transition: 'all 0.15s',
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {hasAccess('inventario', 'crear') && (
+                        <button
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#52B788', color: 'white', padding: '10px 20px', borderRadius: '12px', fontWeight: '900', fontSize: '0.8rem', letterSpacing: '0.05em', textTransform: 'uppercase', border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(82,183,136,0.3)', flexShrink: 0 }}
+                            onClick={() => setIsAddProductOpen(true)}
+                        >
+                            <Plus size={16} strokeWidth={3} />
+                            Añadir
+                        </button>
+                    )}
+                </div>
             </div>
 
-            <div className="table-responsive-wrapper">
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                    <thead>
-                        <tr style={{ borderBottom: '2px solid var(--color-border)', color: 'var(--color-text-muted)' }}>
-                            <th style={{ padding: '1rem' }}>SKU</th>
-                            <th style={{ padding: '1rem' }}>Producto</th>
-                            <th style={{ padding: '1rem' }}>Stock</th>
-                            <th style={{ padding: '1rem' }}>Costo Base</th>
-                            <th style={{ padding: '1rem' }}>Saco ($)</th>
-                            <th style={{ padding: '1rem' }}>Kg ($)</th>
-                            <th style={{ padding: '1rem', textAlign: 'center' }}>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {products.map(p => (
-                            <tr key={p.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                                <td style={{ padding: '1rem', color: 'var(--color-text-muted)' }}>{p.id.toString().padStart(4, '0')}</td>
-                                <td style={{ padding: '1rem', fontWeight: '500' }}>{p.name} {p.metric === 'kg' && <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[10px] font-bold">GRANEL</span>}</td>
-                                <td style={{ padding: '1rem', color: p.stock <= 0 ? 'var(--danger)' : 'inherit', fontWeight: 'bold' }}>
-                                    {p.stock.toFixed(2)} {(p.pesoPorSaco && p.pesoPorSaco > 0) ? 'Sacos' : 'un'}
-                                </td>
-                                <td style={{ padding: '1rem' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                        <span style={{ fontWeight: 'bold' }}>${p.price.toFixed(2)}</span>
-                                        <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>${(p.price / (p.pesoPorSaco || 1)).toFixed(2)} / kg</span>
-                                    </div>
-                                </td>
-                                <td style={{ padding: '1rem', color: '#16a34a', fontWeight: 'bold' }}>
-                                    ${handleCalcPrice(p.price, p.gananciaSacoPct)}
-                                </td>
-                                <td style={{ padding: '1rem', color: '#2563eb', fontWeight: 'bold' }}>
-                                    ${handleCalcPrice(p.price / (p.pesoPorSaco || 1), p.gananciaKiloPct)}
-                                </td>
-                                <td style={{ padding: '1rem', textAlign: 'center' }}>
-                                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                                        {hasAccess('inventario', 'editar') && (
-                                            <>
-                                                <button
-                                                    className="btn-abrir-elite !px-2 !py-1"
-                                                    style={{ fontSize: '0.75rem', margin: 0, borderRadius: 'var(--radius-sm)', backgroundColor: '#10b981' }}
-                                                    onClick={() => handleIngresarStock(p)}
-                                                >
-                                                    + Stock
-                                                </button>
-                                                <button
-                                                    className="btn-abrir-elite !px-2 !py-1"
-                                                    style={{ fontSize: '0.75rem', margin: 0, borderRadius: 'var(--radius-sm)', backgroundColor: '#f59e0b' }}
-                                                    onClick={() => handleRestarStock(p)}
-                                                >
-                                                    - Stock
-                                                </button>
-                                                <button
-                                                    className="btn-abrir-elite !px-2 !py-1"
-                                                    style={{ fontSize: '0.75rem', margin: 0, borderRadius: 'var(--radius-sm)', backgroundColor: '#3b82f6' }}
-                                                    onClick={() => handleEditProductClick(p)}
-                                                    title="Editar"
-                                                >
-                                                    ✏️
-                                                </button>
-                                            </>
-                                        )}
-                                        {hasAccess('inventario', 'eliminar') && (
-                                            <button
-                                                className="btn-abrir-elite !px-2 !py-1"
-                                                style={{ fontSize: '0.75rem', margin: 0, borderRadius: 'var(--radius-sm)', backgroundColor: '#ef4444' }}
-                                                onClick={() => handleDeleteProduct(p)}
-                                                title="Eliminar"
-                                            >
-                                                🗑️
-                                            </button>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+
+            {/* DESKTOP TABLE */}
+            <div className="inventory-table-wrapper">
+                <div className="glass-effect rounded-[2rem] overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="border-b border-black/5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                                    <th className="p-6">SKU</th>
+                                    <th className="p-6">Producto</th>
+                                    <th className="p-6">Existencia</th>
+                                    <th className="p-6">Costos</th>
+                                    <th className="p-6">P. Saco</th>
+                                    <th className="p-6">P. Kilo</th>
+                                    <th className="p-6 text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-black/5">
+                                {sortedFilteredProducts.map(p => (
+                                    <tr key={p.id} className="hover:bg-black/[0.02] transition-colors group">
+                                        <td className="p-6">
+                                            <span className="font-mono text-slate-300 font-bold">#{p.id.toString().padStart(4, '0')}</span>
+                                        </td>
+                                        <td className="p-6">
+                                            <div className="flex flex-col">
+                                                <span className="font-black text-slate-700 uppercase tracking-tighter">{p.name}</span>
+                                                {p.metric === 'kg' && (
+                                                    <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest mt-0.5">Venta al Granel</span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="p-6">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`text-sm font-black ${p.stock <= 5 ? 'text-red-500' : 'text-slate-600'}`}>
+                                                    {p.stock.toFixed(2)}
+                                                </span>
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase">
+                                                    {(p.pesoPorSaco && p.pesoPorSaco > 0) ? 'Sacos' : 'un'}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="p-6">
+                                            <div className="flex flex-col">
+                                                <span className="font-black text-slate-700 text-sm">${p.price.toFixed(2)}</span>
+                                                <span className="text-[10px] font-bold text-slate-400 tracking-tighter uppercase whitespace-nowrap">
+                                                    Eq. ${(p.price / (p.pesoPorSaco || 1)).toFixed(2)} / kg
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="p-6">
+                                            <span className="text-[#1B4332] font-black text-sm">${handleCalcPrice(p.price, p.gananciaSacoPct)}</span>
+                                        </td>
+                                        <td className="p-6">
+                                            <span className="text-[#52B788] font-black text-sm">${handleCalcPrice(p.price / (p.pesoPorSaco || 1), p.gananciaKiloPct)}</span>
+                                        </td>
+                                        <td className="p-6">
+                                            <div className="flex gap-2 justify-center flex-wrap">
+                                                {hasAccess('inventario', 'editar') && (
+                                                    <>
+                                                        <button className="btn-accion-cargar" onClick={() => handleIngresarStock(p)} title="Ingresar Stock">
+                                                            <Plus size={14} strokeWidth={3} /> CARGAR
+                                                        </button>
+                                                        <button className="btn-accion-restar" onClick={() => handleRestarStock(p)} title="Restar Stock">
+                                                            <Minus size={14} strokeWidth={3} /> RESTAR
+                                                        </button>
+                                                        <button className="btn-accion-editar" onClick={() => handleEditProductClick(p)} title="Editar">
+                                                            <Edit3 size={14} />
+                                                        </button>
+                                                    </>
+                                                )}
+                                                {hasAccess('inventario', 'eliminar') && (
+                                                    <button className="btn-accion-eliminar" onClick={() => handleDeleteProduct(p)} title="Eliminar">
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
+
+            {/* MOBILE PRODUCT CARDS */}
+            <div className="inventory-cards-mobile">
+                {sortedFilteredProducts.map(p => (
+                    <div key={p.id} className="inv-product-card">
+                        <div className="inv-product-card-header">
+                            <span className="inv-product-card-name">{p.name}</span>
+                            <span className={`inv-product-card-stock ${p.stock <= 5 ? 'low' : ''}`}>
+                                {p.stock.toFixed(2)} {(p.pesoPorSaco && p.pesoPorSaco > 0) ? 'Sacos' : 'un'}
+                            </span>
+                        </div>
+                        <div className="inv-product-card-prices">
+                            <div className="inv-price-cell">
+                                <span className="inv-price-cell-label">Costo</span>
+                                <span className="inv-price-cell-value">${p.price.toFixed(2)}</span>
+                            </div>
+                            <div className="inv-price-cell">
+                                <span className="inv-price-cell-label">P. Saco</span>
+                                <span className="inv-price-cell-value" style={{ color: '#1B4332' }}>${handleCalcPrice(p.price, p.gananciaSacoPct)}</span>
+                            </div>
+                            <div className="inv-price-cell">
+                                <span className="inv-price-cell-label">P. Kilo</span>
+                                <span className="inv-price-cell-value" style={{ color: '#52B788' }}>${handleCalcPrice(p.price / (p.pesoPorSaco || 1), p.gananciaKiloPct)}</span>
+                            </div>
+                        </div>
+                        <div className="inv-product-card-actions">
+                            {hasAccess('inventario', 'editar') && (
+                                <>
+                                    <button className="btn-accion-cargar" onClick={() => handleIngresarStock(p)}><Plus size={13} strokeWidth={3} /> CARGAR</button>
+                                    <button className="btn-accion-restar" onClick={() => handleRestarStock(p)}><Minus size={13} strokeWidth={3} /> RESTAR</button>
+                                    <button className="btn-accion-editar" onClick={() => handleEditProductClick(p)}><Edit3 size={13} /></button>
+                                </>
+                            )}
+                            {hasAccess('inventario', 'eliminar') && (
+                                <button className="btn-accion-eliminar" onClick={() => handleDeleteProduct(p)}><Trash2 size={13} /></button>
+                            )}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
 
             {/* Modal Añadir Producto */}
             {isAddProductOpen && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-                    <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: '12px', width: '90%', maxWidth: '500px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem', borderBottom: '1px solid #eee', paddingBottom: '0.5rem' }}>➕ Añadir Nuevo Producto</h3>
+                <div className="modal-overlay activo flex items-center justify-center p-4 z-[2000]">
+                    <div className="glass-effect rounded-[2.5rem] w-full max-w-lg p-8 md:p-10 shadow-2xl relative animate-scaleIn">
+                        <button onClick={() => setIsAddProductOpen(false)} className="absolute top-8 right-8 text-slate-400 hover:text-slate-600 transition-colors">
+                            <X size={24} />
+                        </button>
 
-                        <form onSubmit={handleAddProductSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#4b5563' }}>Nombre del Producto</label>
+                        <div className="flex items-center gap-4 mb-8">
+                            <div className="w-12 h-12 bg-[#52B788]/20 rounded-2xl flex items-center justify-center text-[#2ECC71]">
+                                <Plus size={28} />
+                            </div>
+                            <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">Nuevo Producto</h3>
+                        </div>
+
+                        <form onSubmit={handleAddProductSubmit} className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Nombre Comercial</label>
                                 <input
                                     type="text"
                                     required
-                                    style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }}
+                                    className="w-full bg-black/5 border-none p-4 rounded-xl font-bold text-slate-700 focus:ring-2 focus:ring-[#52B788] outline-none"
                                     value={newProduct.name}
                                     onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
-                                    placeholder="Ej. Saco de Maíz, Harina..."
+                                    placeholder="Ej. Saco de Maíz Blanco"
                                 />
                             </div>
 
-                            <div style={{ display: 'flex', gap: '1rem' }}>
-                                <div style={{ flex: 1 }}>
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#4b5563' }}>Costo Total ($)</label>
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Costo ($)</label>
                                     <input
                                         type="number" step="0.01" required
-                                        style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }}
+                                        className="w-full bg-black/5 border-none p-4 rounded-xl font-bold text-slate-700 outline-none"
                                         value={newProduct.costoBase}
                                         onChange={e => setNewProduct({ ...newProduct, costoBase: e.target.value })}
                                         placeholder="0.00"
                                     />
                                 </div>
-                                <div style={{ flex: 1 }}>
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#4b5563' }}>Peso Total (Kg)</label>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Peso (Kg)</label>
                                     <input
                                         type="number" step="0.01" required
-                                        style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }}
+                                        className="w-full bg-black/5 border-none p-4 rounded-xl font-bold text-slate-700 outline-none"
                                         value={newProduct.pesoTotalKg}
                                         onChange={e => setNewProduct({ ...newProduct, pesoTotalKg: e.target.value })}
-                                        placeholder="0.00"
+                                        placeholder="40"
                                     />
                                 </div>
                             </div>
 
-                            <div style={{ backgroundColor: '#f3f4f6', padding: '1rem', borderRadius: '8px', marginTop: '0.5rem' }}>
-                                <h4 style={{ fontWeight: 'bold', marginBottom: '1rem', fontSize: '0.9rem', color: '#374151', textTransform: 'uppercase' }}>Configuración de Ganancias</h4>
+                            <div className="bg-white/50 backdrop-blur-sm p-6 rounded-3xl border border-black/5 space-y-6">
+                                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-center border-b border-black/5 pb-4">Estrategia de Precios</h4>
 
-                                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                                    <div style={{ flex: 1 }}>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: '#4b5563' }}>Margen Saco (%)</label>
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">% Ganancia Saco</label>
                                         <input
                                             type="number" step="0.1" required
-                                            style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db' }}
+                                            className="w-full bg-white border-2 border-slate-100 p-3 rounded-xl font-black text-[#1B4332] outline-none text-center"
                                             value={newProduct.gananciaSacoPct}
                                             onChange={e => setNewProduct({ ...newProduct, gananciaSacoPct: e.target.value })}
                                         />
                                         {newProduct.costoBase && newProduct.gananciaSacoPct && (
-                                            <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#16a34a', fontWeight: 'bold' }}>
-                                                Venta Saco: ${handleCalcPrice(newProduct.costoBase, newProduct.gananciaSacoPct)}
+                                            <p className="text-[10px] font-black text-emerald-600 text-center uppercase tracking-tighter">
+                                                PvP: ${handleCalcPrice(newProduct.costoBase, newProduct.gananciaSacoPct)}
                                             </p>
                                         )}
                                     </div>
 
-                                    <div style={{ flex: 1 }}>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: '#4b5563' }}>Margen Detal (%)</label>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">% Ganancia Kilo</label>
                                         <input
                                             type="number" step="0.1" required
-                                            style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db' }}
+                                            className="w-full bg-white border-2 border-slate-100 p-3 rounded-xl font-black text-blue-600 outline-none text-center"
                                             value={newProduct.gananciaKiloPct}
                                             onChange={e => setNewProduct({ ...newProduct, gananciaKiloPct: e.target.value })}
                                         />
                                         {newProduct.costoBase && newProduct.pesoTotalKg && newProduct.gananciaKiloPct && (
-                                            <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#2563eb', fontWeight: 'bold' }}>
-                                                Venta Kilo: ${handleCalcPrice(parseFloat(newProduct.costoBase) / parseFloat(newProduct.pesoTotalKg), newProduct.gananciaKiloPct)}
+                                            <p className="text-[10px] font-black text-blue-500 text-center uppercase tracking-tighter">
+                                                PvP Kilo: ${handleCalcPrice(parseFloat(newProduct.costoBase) / parseFloat(newProduct.pesoTotalKg), newProduct.gananciaKiloPct)}
                                             </p>
                                         )}
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex flex-col sm:flex-row gap-4 mt-4">
-                                <button type="button" onClick={() => setIsAddProductOpen(false)} style={{ flex: 1, padding: '12px', backgroundColor: '#e5e7eb', color: '#4b5563', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }} className="btn-mobile-full">
-                                    Cancelar
-                                </button>
-                                <button type="submit" style={{ flex: 1, padding: '12px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }} className="btn-mobile-full">
-                                    💾 Guardar Producto
+                            <div className="flex gap-4 pt-4">
+                                <button
+                                    type="submit"
+                                    className="flex-1 bg-[#1B4332] text-white py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-[#1B4332]/20 hover:bg-[#2D6A4F] transition-all flex items-center justify-center gap-3"
+                                >
+                                    <Save size={18} />
+                                    Guardar Producto
                                 </button>
                             </div>
                         </form>
@@ -435,85 +587,95 @@ function InventoryView({ products, setProducts, exchangeRate, prepagos, setPrepa
 
             {/* Modal Editar Producto */}
             {isEditProductOpen && productToEdit && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-                    <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: '12px', width: '90%', maxWidth: '500px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem', borderBottom: '1px solid #eee', paddingBottom: '0.5rem' }}>✏️ Editar Producto</h3>
+                <div className="modal-overlay activo flex items-center justify-center p-4 z-[2000]">
+                    <div className="glass-effect rounded-[2.5rem] w-full max-w-lg p-8 md:p-10 shadow-2xl relative animate-scaleIn">
+                        <button onClick={() => setIsEditProductOpen(false)} className="absolute top-8 right-8 text-slate-400 hover:text-slate-600 transition-colors">
+                            <X size={24} />
+                        </button>
 
-                        <form onSubmit={handleEditProductSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#4b5563' }}>Nombre del Producto</label>
+                        <div className="flex items-center gap-4 mb-8">
+                            <div className="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center text-blue-600">
+                                <Edit3 size={28} />
+                            </div>
+                            <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">Editar Producto</h3>
+                        </div>
+
+                        <form onSubmit={handleEditProductSubmit} className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Nombre Comercial</label>
                                 <input
                                     type="text"
                                     required
-                                    style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }}
+                                    className="w-full bg-black/5 border-none p-4 rounded-xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500"
                                     value={productToEdit.name}
                                     onChange={e => setProductToEdit({ ...productToEdit, name: e.target.value })}
                                 />
                             </div>
 
-                            <div style={{ display: 'flex', gap: '1rem' }}>
-                                <div style={{ flex: 1 }}>
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#4b5563' }}>Costo Total ($)</label>
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Costo ($)</label>
                                     <input
                                         type="number" step="0.01" required
-                                        style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }}
+                                        className="w-full bg-black/5 border-none p-4 rounded-xl font-bold text-slate-700 outline-none"
                                         value={productToEdit.costoBase}
                                         onChange={e => setProductToEdit({ ...productToEdit, costoBase: e.target.value })}
                                     />
                                 </div>
-                                <div style={{ flex: 1 }}>
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#4b5563' }}>Peso Total (Kg)</label>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Peso (Kg)</label>
                                     <input
                                         type="number" step="0.01" required
-                                        style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }}
+                                        className="w-full bg-black/5 border-none p-4 rounded-xl font-bold text-slate-700 outline-none"
                                         value={productToEdit.pesoTotalKg}
                                         onChange={e => setProductToEdit({ ...productToEdit, pesoTotalKg: e.target.value })}
                                     />
                                 </div>
                             </div>
 
-                            <div style={{ backgroundColor: '#f3f4f6', padding: '1rem', borderRadius: '8px', marginTop: '0.5rem' }}>
-                                <h4 style={{ fontWeight: 'bold', marginBottom: '1rem', fontSize: '0.9rem', color: '#374151', textTransform: 'uppercase' }}>Configuración de Ganancias</h4>
+                            <div className="bg-white/50 backdrop-blur-sm p-6 rounded-3xl border border-black/5 space-y-6">
+                                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-center border-b border-black/5 pb-4">Estrategia de Precios</h4>
 
-                                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                                    <div style={{ flex: 1 }}>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: '#4b5563' }}>Margen Saco (%)</label>
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">% Ganancia Saco</label>
                                         <input
                                             type="number" step="0.1" required
-                                            style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db' }}
+                                            className="w-full bg-white border-2 border-slate-100 p-3 rounded-xl font-black text-[#1B4332] outline-none text-center"
                                             value={productToEdit.gananciaSacoPct}
                                             onChange={e => setProductToEdit({ ...productToEdit, gananciaSacoPct: e.target.value })}
                                         />
                                         {productToEdit.costoBase && productToEdit.gananciaSacoPct && (
-                                            <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#16a34a', fontWeight: 'bold' }}>
-                                                Venta Saco: ${handleCalcPrice(productToEdit.costoBase, productToEdit.gananciaSacoPct)}
+                                            <p className="text-[10px] font-black text-emerald-600 text-center uppercase tracking-tighter">
+                                                PvP: ${handleCalcPrice(productToEdit.costoBase, productToEdit.gananciaSacoPct)}
                                             </p>
                                         )}
                                     </div>
 
-                                    <div style={{ flex: 1 }}>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: '#4b5563' }}>Margen Detal (%)</label>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">% Ganancia Kilo</label>
                                         <input
                                             type="number" step="0.1" required
-                                            style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db' }}
+                                            className="w-full bg-white border-2 border-slate-100 p-3 rounded-xl font-black text-blue-600 outline-none text-center"
                                             value={productToEdit.gananciaKiloPct}
                                             onChange={e => setProductToEdit({ ...productToEdit, gananciaKiloPct: e.target.value })}
                                         />
                                         {productToEdit.costoBase && productToEdit.pesoTotalKg && productToEdit.gananciaKiloPct && (
-                                            <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#2563eb', fontWeight: 'bold' }}>
-                                                Venta Kilo: ${handleCalcPrice(parseFloat(productToEdit.costoBase) / parseFloat(productToEdit.pesoTotalKg), productToEdit.gananciaKiloPct)}
+                                            <p className="text-[10px] font-black text-blue-500 text-center uppercase tracking-tighter">
+                                                PvP Kilo: ${handleCalcPrice(parseFloat(productToEdit.costoBase) / parseFloat(productToEdit.pesoTotalKg), productToEdit.gananciaKiloPct)}
                                             </p>
                                         )}
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex flex-col sm:flex-row gap-4 mt-4">
-                                <button type="button" onClick={() => setIsEditProductOpen(false)} style={{ flex: 1, padding: '12px', backgroundColor: '#e5e7eb', color: '#4b5563', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }} className="btn-mobile-full">
-                                    Cancelar
-                                </button>
-                                <button type="submit" style={{ flex: 1, padding: '12px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }} className="btn-mobile-full">
-                                    💾 Guardar Cambios
+                            <div className="flex gap-4 pt-4">
+                                <button
+                                    type="submit"
+                                    className="flex-1 bg-blue-600 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all flex items-center justify-center gap-3"
+                                >
+                                    <Save size={18} />
+                                    Guardar Cambios
                                 </button>
                             </div>
                         </form>
