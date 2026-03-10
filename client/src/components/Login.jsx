@@ -21,10 +21,16 @@ function Login({ onLoginComplete }) {
         setIsLoading(true);
 
         try {
-            // 1. Buscar usuario en Supabase por username
+            // 1. Buscar usuario en Supabase por username, incluyendo su rol y permisos
             const { data: usuarios, error } = await supabase
                 .from('usuarios')
-                .select('*')
+                .select(`
+                    *,
+                    roles (
+                        nombre,
+                        permisos
+                    )
+                `)
                 .eq('username', username.trim())
                 .limit(1);
 
@@ -45,13 +51,20 @@ function Login({ onLoginComplete }) {
                 return;
             }
 
-            // 3. Login exitoso
+            // 3. Login exitoso - Preparar objeto de usuario con permisos
+            const usuarioConPermisos = {
+                ...usuario,
+                rol_nombre: usuario.roles?.nombre,
+                rol: usuario.roles?.nombre === 'Administrador' ? 'admin' : 'cajero',
+                permisos: usuario.roles?.permisos || {}
+            };
+
             const Toast = Swal.mixin({
                 toast: true, position: 'top-end',
                 showConfirmButton: false, timer: 2000, timerProgressBar: true
             });
             Toast.fire({ icon: 'success', title: `¡Bienvenido, ${usuario.nombre}!` });
-            onLoginComplete(usuario);
+            onLoginComplete(usuarioConPermisos);
 
         } catch (err) {
             console.error('[Login] Error:', err);
