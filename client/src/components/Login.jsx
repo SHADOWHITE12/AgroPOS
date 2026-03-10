@@ -37,7 +37,7 @@ function Login({ onLoginComplete }) {
             const usuario = usuarios[0];
 
             // 2. Comparar contraseña con el hash almacenado (bcrypt en cliente)
-            const passwordMatch = await bcrypt.compare(password, usuario.password_hash);
+            const passwordMatch = await bcrypt.compare(password, usuario.password);
 
             if (!passwordMatch) {
                 Swal.fire({ icon: 'error', title: 'Acceso Denegado', text: 'Contraseña incorrecta.' });
