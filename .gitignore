@@ -1,0 +1,16 @@
+node_modules/
+.env
+.env.*
+.env.local
+.DS_Store
+dist/
+client/dist/
+build/
+*.log
+debug.log
+coverage/
+.vs/
+.vscode/
+# Estado local del servidor (se regenera desde Supabase en producción)
+state.json
+respaldos/
